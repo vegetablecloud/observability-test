@@ -1,0 +1,156 @@
+# =============================================================================
+# OpenTelemetry Collector – den gemensamma ingången för ALL telemetri
+#
+#   PUSH  (tjänsterna skickar själva, OTLP)      PULL  (Collectorn hämtar)
+#   frontend, backend, algorithm, ai-chat   ─┐   ┌─ llm-server /metrics  (vLLM)
+#   + ALLA externa team/produkter som       │   │  qdrant     /metrics
+#     pekar sin OTel-SDK hit (4317/4318)    │   │  postgres   (SQL-statistik)
+#                                           ▼   ▼
+#                         receivers → processors → exporters
+#                                                     │
+#                           Loki (logs) · Tempo (traces) · Prometheus (metrics)
+#
+# Infrastruktur (node-exporter, cAdvisor, dcgm-exporter) skrapas av PROMETHEUS
+# direkt – se prometheus/prometheus.yml. Båda mönstren är vanliga.
+# =============================================================================
+
+receivers:
+  # ---- PUSH: OTLP från alla som har en OTel-SDK -----------------------------
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins: ["*"]      # tillåt browser-SDK (RUM) att skicka direkt
+
+  # ---- PULL: Prometheus-format från produkter du inte äger ------------------
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: llm-server            # blir service.name = "llm-server"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["llm:8000"]
+        - job_name: qdrant
+          scrape_interval: 15s
+          static_configs:
+            - targets: ["qdrant:6333"]
+
+  # ---- PULL: Collectorn loggar in i Postgres och läser statistik ------------
+  postgresql:
+    endpoint: postgres:5432
+    username: demo
+    password: demo
+    databases: [demo]
+    collection_interval: 15s
+    tls:
+      insecure: true
+
+processors:
+  # 1. Skydda Collectorn själv – backa av innan minnet tar slut
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 20
+
+  # 2. Berika: sätt miljö på allt som saknar det (upsert skriver över, insert inte)
+  resource/env:
+    attributes:
+      - key: deployment.environment.name
+        value: demo
+        action: insert
+
+  # 3. Rensa brus: health checks och DEBUG-loggar lagras aldrig
+  filter/noise:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["url.path"] == "/health"'
+        - 'attributes["http.route"] == "/health"'
+    logs:
+      log_record:
+        - 'severity_number > 0 and severity_number < SEVERITY_NUMBER_INFO'
+
+  # 4. Redaction: PII får inte lämna Collectorn
+  transform/redact:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(attributes["user.email"], "[REDACTED]") where attributes["user.email"] != nil
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["UserEmail"], "[REDACTED]") where attributes["UserEmail"] != nil
+          - replace_pattern(body, "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[REDACTED]")
+
+  # 5. Tail sampling: bestäm EFTER att hela tracen kommit in
+  #    behåll alltid fel + långsamma, och X % av resten (TRACE_SAMPLING_PERCENT)
+  tail_sampling:
+    decision_wait: 5s
+    num_traces: 20000
+    policies:
+      - name: errors
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+      - name: slow
+        type: latency
+        latency: { threshold_ms: 2000 }
+      - name: rest
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: ${env:TRACE_SAMPLING_PERCENT}
+
+  # 6. Batch: färre, större skrivningar mot backends
+  batch:
+    send_batch_size: 8192
+    timeout: 2s
+
+exporters:
+  otlp_grpc/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlp_http/loki:
+    endpoint: http://loki:3100/otlp
+  otlp_http/prometheus:
+    endpoint: http://prometheus:9090/api/v1/otlp
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource/env, filter/noise, transform/redact, tail_sampling, batch]
+      exporters: [otlp_grpc/tempo]
+    metrics:
+      receivers: [otlp, prometheus, postgresql]
+      processors: [memory_limiter, resource/env, batch]
+      exporters: [otlp_http/prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource/env, filter/noise, transform/redact, batch]
+      exporters: [otlp_http/loki]
+
+  # Collectorns EGEN telemetri – Prometheus skrapar :8888 (dashboard 01)
+  telemetry:
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+    logs:
+      level: info

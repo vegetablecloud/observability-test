@@ -1,0 +1,70 @@
+# De tre datakällorna – och LÄNKARNA mellan dem. Det är länkarna som gör
+# att du kan klicka dig metric -> trace -> logs utan att kopiera id:n.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      httpMethod: POST
+      # Exemplar (en punkt i en histogram-graf) -> öppna tracen i Tempo
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # Span -> loggar i Loki för samma trace_id
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: false
+        customQuery: true
+        query: '{service_name="$${__span.tags["service.name"]}"} | trace_id="$${__trace.traceId}"'
+      # Span -> RED-metrics för tjänsten i Prometheus
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: -10m
+        spanEndTimeShift: 10m
+        tags: [{ key: service.name, value: service_name }]
+        queries:
+          - name: p95 (http.server)
+            query: histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{$$__tags}[1m])))
+          - name: Felkvot
+            query: sum(rate(http_server_request_duration_seconds_count{$$__tags, http_response_status_code=~"5.."}[1m])) / sum(rate(http_server_request_duration_seconds_count{$$__tags}[1m]))
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: -30m
+        spanEndTimeShift: 30m
+      streamingEnabled:
+        search: true
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+      # Loggrad -> tracen. trace_id ligger som structured metadata (label-matcher)
+      derivedFields:
+        - name: trace_id
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: Öppna trace

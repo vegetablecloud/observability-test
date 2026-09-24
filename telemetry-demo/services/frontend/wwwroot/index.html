@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-chatt · Telemetry-demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { --y:#FFB400; --wh:#fff; --g200:#EDEDED; --g300:#D6D6D6; --g500:#707070; --g700:#4D4D4D; --panel:#0D0D0D; --line:#262626;
+          --sans:'Inter',system-ui,sans-serif; --mono:'Roboto Mono',ui-monospace,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#000; color:var(--wh); font-family:var(--sans); }
+  a { color:var(--y); } a:hover { color:#FFC333; }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 16px 48px; display:grid; grid-template-columns:1fr 320px; gap:24px; }
+  @media (max-width:860px){ .wrap{ grid-template-columns:1fr; } }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-0.025em; margin:0 0 4px; }
+  .eyebrow, .label { font-family:var(--mono); font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--g500); }
+  .eyebrow { color:var(--y); margin-bottom:10px; }
+  .panel { background:var(--panel); border:1px solid var(--line); padding:18px; }
+  #log { min-height:420px; max-height:62vh; overflow:auto; display:flex; flex-direction:column; gap:14px; }
+  .msg { max-width:88%; padding:12px 14px; line-height:1.45; }
+  .me { align-self:flex-end; background:#161616; border:1px solid var(--g700); }
+  .bot { align-self:flex-start; border:1px solid var(--line); }
+  .bot.err { border-color:var(--y); }
+  .meta { font-family:var(--mono); font-size:12px; color:var(--g500); margin-top:8px; display:flex; flex-wrap:wrap; gap:12px; }
+  .meta .slow { color:var(--y); }
+  form { display:flex; gap:10px; margin-top:14px; }
+  input { flex:1; background:#050505; border:1px solid var(--g700); color:var(--wh); font:16px var(--sans); padding:12px; }
+  input:focus { outline:none; border-color:var(--y); }
+  button { background:var(--y); color:#000; border:0; font:600 15px var(--sans); padding:0 18px; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--g200); border:1px solid var(--g700); padding:10px 12px; width:100%; text-align:left; font-weight:400; }
+  button.ghost:hover, button.ghost.on { border-color:var(--y); color:var(--y); }
+  aside .panel + .panel { margin-top:16px; }
+  aside p { color:var(--g300); font-size:14px; line-height:1.5; margin:8px 0 12px; }
+  .stack { display:flex; flex-direction:column; gap:8px; }
+  .links a { display:block; font-family:var(--mono); font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main>
+    <div class="eyebrow">frontend (c#) → backend (c#) → algorithm (py) → ai-chat (py) → qdrant · llm</div>
+    <h1>Fråga om observability</h1>
+    <div class="label" style="margin-bottom:16px">Varje fråga blir en trace genom 6 tjänster · klicka på trace_id för att öppna den i Grafana</div>
+    <div class="panel">
+      <div id="log"></div>
+      <form id="f">
+        <input id="q" autocomplete="off" placeholder="T.ex. Hur kopplar jag loggar till en trace?" value="Hur kopplar jag loggar i Loki till en trace_id?">
+        <button>Skicka</button>
+      </form>
+    </div>
+  </main>
+  <aside>
+    <div class="panel">
+      <div class="label">Simulera incident</div>
+      <p>Gör LLM:en långsam (GPU mot 100 %) eller felande. Följ sedan kedjan metrics → traces → logs i Grafana.</p>
+      <div class="stack">
+        <button class="ghost" data-mode="normal">● normal</button>
+        <button class="ghost" data-mode="slow">● slow · LLM-timeouts</button>
+        <button class="ghost" data-mode="error">● error · 30 % 500:or</button>
+      </div>
+    </div>
+    <div class="panel links">
+      <div class="label">Grafana</div>
+      <a id="d-flow" href="#">01 · Telemetriflödet</a>
+      <a id="d-overview" href="#">02 · Plattform · Översikt</a>
+      <a id="d-ai" href="#">03 · AI · RAG & LLM</a>
+      <a id="d-infra" href="#">04 · Infrastruktur</a>
+      <a id="d-card" href="#">05 · Cardinality & kostnad</a>
+    </div>
+  </aside>
+</div>
+<script>
+let grafana = 'http://localhost:3000';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function traceLink(id) {
+  const panes = { a: { datasource: 'tempo', queries: [{ refId: 'A', datasource: { type: 'tempo', uid: 'tempo' }, queryType: 'traceql', query: id }], range: { from: 'now-1h', to: 'now' } } };
+  return `${grafana}/explore?schemaVersion=1&panes=${encodeURIComponent(JSON.stringify(panes))}`;
+}
+function add(html, cls) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('#log').appendChild(d); $('#log').scrollTop = 1e9; return d; }
+
+fetch('/config').then(r => r.json()).then(c => {
+  grafana = c.grafanaUrl;
+  const ids = { 'd-flow': 'telemetry-flow', 'd-overview': 'platform-overview', 'd-ai': 'ai-rag-llm', 'd-infra': 'infra-dgx', 'd-card': 'cardinality-cost' };
+  Object.entries(ids).forEach(([el, uid]) => { $('#' + el).href = `${grafana}/d/${uid}`; $('#' + el).target = '_blank'; });
+});
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = $('#q').value.trim(); if (!q) return;
+  add(esc(q), 'me'); $('#q').value = '';
+  const pending = add('<span class="label">tänker…</span>', 'bot');
+  const t0 = performance.now();
+  try {
+    const r = await fetch('/ask', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ question: q, userId: 'u-browser', userEmail: 'anna@kund.se' }) });
+    const ms = Math.round(performance.now() - t0), tid = r.headers.get('x-trace-id');
+    const j = await r.json().catch(() => ({}));
+    const meta = `<div class="meta"><span class="${ms > 2000 ? 'slow' : ''}">${ms} ms</span>` +
+      (j.intent ? `<span>intent=${esc(j.intent)}</span>` : '') +
+      (tid ? `<a href="${traceLink(tid)}" target="_blank">trace_id=${tid}</a>` : '') + '</div>';
+    if (!r.ok) { pending.classList.add('err'); pending.innerHTML = `Något gick fel (${r.status}): ${esc(j.detail || j.title || '')}${meta}`; return; }
+    pending.innerHTML = esc(j.answer) + meta;
+  } catch (err) { pending.classList.add('err'); pending.textContent = 'Nätverksfel: ' + err; }
+});
+
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', async () => {
+  const r = await fetch('/demo/chaos/' + b.dataset.mode, { method: 'POST' });
+  if (r.ok) document.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x === b));
+}));
+</script>
+</body>
+</html>

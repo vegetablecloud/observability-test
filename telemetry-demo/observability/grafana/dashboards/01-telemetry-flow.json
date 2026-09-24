@@ -1,0 +1,2173 @@
+{
+  "uid": "telemetry-flow",
+  "title": "01 · Telemetriflödet",
+  "description": "Hur telemetri flyttar sig: källor (push/pull) → OTel Collector → Loki/Tempo/Prometheus → Grafana",
+  "tags": [
+    "telemetry-demo"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "version": 1,
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "Telemetry-demo",
+      "type": "dashboards",
+      "tags": [
+        "telemetry-demo"
+      ],
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": null,
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "\n<div style=\"font-family:Inter,system-ui,sans-serif;color:#fff;padding:4px 8px\">\n<svg viewBox=\"0 0 1600 330\" width=\"100%\" style=\"max-height:330px\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Roboto Mono, monospace\">\n  <defs>\n    <marker id=\"a\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#D6D6D6\"/></marker>\n    <marker id=\"ay\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#FFB400\"/></marker>\n  </defs>\n  <g font-size=\"13\" fill=\"#707070\" letter-spacing=\"1\">\n    <text x=\"20\" y=\"20\">① KÄLLOR</text><text x=\"560\" y=\"20\">② OTEL COLLECTOR</text><text x=\"1060\" y=\"20\">③ LAGRING</text><text x=\"1400\" y=\"20\">④ GRAFANA</text>\n  </g>\n  <!-- push -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"52\" fill=\"#FFB400\">PUSH · OTLP · tjänsten äger sin SDK</text>\n    <rect x=\"20\" y=\"62\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"32\" y=\"84\" fill=\"#fff\">frontend · c#</text>\n    <rect x=\"220\" y=\"62\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"232\" y=\"84\" fill=\"#fff\">backend · c#</text>\n    <rect x=\"20\" y=\"104\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"32\" y=\"126\" fill=\"#fff\">algorithm · py</text>\n    <rect x=\"220\" y=\"104\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"232\" y=\"126\" fill=\"#fff\">ai-chat · py</text>\n    <text x=\"20\" y=\"160\" fill=\"#707070\">+ andra team → :4317 / :4318</text>\n  </g>\n  <!-- pull by collector -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"196\" fill=\"#D6D6D6\">PULL · Collectorn hämtar · du äger inte koden</text>\n    <rect x=\"20\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"30\" y=\"228\" fill=\"#fff\">vLLM</text>\n    <rect x=\"152\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"162\" y=\"228\" fill=\"#fff\">qdrant</text>\n    <rect x=\"284\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"294\" y=\"228\" fill=\"#fff\">postgres</text>\n  </g>\n  <!-- pull by prometheus -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"272\" fill=\"#D6D6D6\">PULL · Prometheus skrapar infra</text>\n    <rect x=\"20\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"30\" y=\"304\" fill=\"#fff\">node-exp</text>\n    <rect x=\"152\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"162\" y=\"304\" fill=\"#fff\">cAdvisor</text>\n    <rect x=\"284\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"294\" y=\"304\" fill=\"#fff\">dcgm (GPU)</text>\n  </g>\n  <!-- collector -->\n  <rect x=\"560\" y=\"40\" width=\"420\" height=\"220\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\" stroke-width=\"2\"/>\n  <g font-size=\"13\" fill=\"#fff\">\n    <rect x=\"580\" y=\"60\" width=\"110\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"592\" y=\"82\" fill=\"#707070\">RECEIVE</text>\n    <text x=\"592\" y=\"110\">otlp</text><text x=\"592\" y=\"134\">prometheus</text><text x=\"592\" y=\"158\">postgresql</text>\n    <rect x=\"705\" y=\"60\" width=\"140\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"717\" y=\"82\" fill=\"#707070\">PROCESS</text>\n    <text x=\"717\" y=\"106\">memory_limiter</text><text x=\"717\" y=\"128\">filter (brus)</text><text x=\"717\" y=\"150\">redact (PII)</text><text x=\"717\" y=\"172\">tail_sampling</text><text x=\"717\" y=\"194\">batch</text>\n    <rect x=\"860\" y=\"60\" width=\"104\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"872\" y=\"82\" fill=\"#707070\">EXPORT</text>\n    <text x=\"872\" y=\"110\">loki</text><text x=\"872\" y=\"134\">tempo</text><text x=\"872\" y=\"158\">prometheus</text>\n  </g>\n  <!-- arrows sources -> collector -->\n  <path fill=\"none\" d=\"M410 100 L560 100\" stroke=\"#FFB400\" stroke-width=\"3\" marker-end=\"url(#ay)\"/>\n  <text x=\"440\" y=\"92\" font-size=\"12\" fill=\"#FFB400\">logs·traces·metrics</text>\n  <path fill=\"none\" d=\"M560 222 L410 222\" stroke=\"#D6D6D6\" stroke-width=\"2\" stroke-dasharray=\"6 5\" marker-end=\"url(#a)\"/>\n  <text x=\"440\" y=\"214\" font-size=\"12\" fill=\"#D6D6D6\">GET /metrics</text>\n  <!-- stores -->\n  <g font-size=\"16\" fill=\"#fff\">\n    <rect x=\"1060\" y=\"44\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"78\">Loki</text><text x=\"1160\" y=\"78\" font-size=\"12\" fill=\"#707070\">LOGS</text>\n    <rect x=\"1060\" y=\"122\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"156\">Tempo</text><text x=\"1160\" y=\"156\" font-size=\"12\" fill=\"#707070\">TRACES</text>\n    <rect x=\"1060\" y=\"200\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"234\">Prometheus</text><text x=\"1200\" y=\"234\" font-size=\"12\" fill=\"#707070\">METRICS</text>\n  </g>\n  <path fill=\"none\" d=\"M980 72 L1060 72\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M980 150 L1060 150\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M980 228 L1060 228\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <!-- tempo -> prometheus metrics generator -->\n  <path fill=\"none\" d=\"M1300 178 Q1340 190 1300 200\" stroke=\"#707070\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"4 4\" marker-end=\"url(#a)\"/>\n  <text x=\"1318\" y=\"194\" font-size=\"11\" fill=\"#707070\">RED</text>\n  <!-- prometheus scrape infra -->\n  <path fill=\"none\" d=\"M1185 256 L1185 299 L410 299\" stroke=\"#D6D6D6\" stroke-width=\"2\" stroke-dasharray=\"6 5\" marker-end=\"url(#a)\"/>\n  <text x=\"700\" y=\"292\" font-size=\"12\" fill=\"#D6D6D6\">scrape (pull)</text>\n  <!-- grafana -->\n  <rect x=\"1400\" y=\"44\" width=\"180\" height=\"212\" fill=\"#FFB400\"/>\n  <text x=\"1418\" y=\"80\" font-size=\"20\" font-weight=\"600\" font-family=\"Inter\" fill=\"#000\">Grafana</text>\n  <g font-size=\"12\" fill=\"#000\"><text x=\"1418\" y=\"110\">metric → exemplar</text><text x=\"1418\" y=\"132\">→ trace</text><text x=\"1418\" y=\"154\">→ logs (trace_id)</text><text x=\"1418\" y=\"190\">samma tidsaxel</text><text x=\"1418\" y=\"210\">samma service.name</text></g>\n  <path fill=\"none\" d=\"M1310 72 L1400 72\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M1310 150 L1400 150\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M1310 228 L1400 228\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n</svg>\n</div>\n"
+      },
+      "transparent": true
+    },
+    {
+      "id": 2,
+      "type": "row",
+      "title": "① Källor – vem skickar vad? (push)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Push-tjänster: telemetri per service.name",
+      "description": "Spans/s (Tempo span-metrics), aktiva metric-serier (Prometheus) och loggrader/s (Loki) per tjänst. Alla tre går att ställa mot varandra tack vare samma service.name.",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 14,
+        "h": 8
+      },
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (service) (rate(traces_spanmetrics_calls_total[2m]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "count by (service_name) ({service_name=~\".+\", job!~\"llm-server|qdrant|postgresql\"})",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "C",
+          "expr": "sum by (service_name) (rate({service_name=~\".+\"}[2m]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Spans/s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Loggrader/s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Spans/s",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "service": "service_name"
+            }
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "service_name",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
+            },
+            "renameByName": {
+              "service_name": "Tjänst",
+              "Value #A": "Spans/s",
+              "Value #B": "Metric-serier",
+              "Value #C": "Loggrader/s"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Prometheus hämtar själv (pull)",
+      "description": "Scrape-mål i prometheus.yml: infrastruktur-exporters och observability-stacken själv.",
+      "gridPos": {
+        "x": 14,
+        "y": 11,
+        "w": 5,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (job) (up{service_name=\"\"})",
+          "legendFormat": "{{job}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "#161616"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "#FFB400"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Collectorn hämtar (pull)",
+      "description": "Tredjepart du inte äger: Collectorns prometheus- och postgresql-receivers hämtar och skickar sedan vidare som OTLP.",
+      "gridPos": {
+        "x": 19,
+        "y": 11,
+        "w": 5,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (job) (up{service_name!=\"\"})",
+          "legendFormat": "{{job}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "clamp_max(sum(rate(otelcol_scraper_scraped_metric_points{receiver=\"postgresql\"}[2m])) > bool 0, 1)",
+          "legendFormat": "postgres",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "#161616"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "#FFB400"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "② OTel Collector – receive · process · export",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "In: spans/s",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(otelcol_receiver_accepted_spans[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "In: metric points/s",
+      "description": "",
+      "gridPos": {
+        "x": 4,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(otelcol_receiver_accepted_metric_points[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "In: loggrader/s",
+      "description": "",
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(otelcol_receiver_accepted_log_records[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Refused / failed",
+      "description": "Ska vara 0. Blir den gul: Collectorn eller en backend orkar inte (memory_limiter backar av eller exporten misslyckas).",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(otelcol_receiver_refused_spans[1m])) + sum(rate(otelcol_receiver_refused_log_records[1m])) + sum(rate(otelcol_receiver_refused_metric_points[1m])) + sum(rate(otelcol_exporter_send_failed_spans[1m]) or vector(0))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 0.01,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Exporter-kö",
+      "description": "Data som väntar på att skickas till Loki/Tempo/Prometheus. Växer den är en backend långsam.",
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(otelcol_exporter_queue_size)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 100,
+                "color": "#FFB400"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Collector-minne",
+      "description": "",
+      "gridPos": {
+        "x": 20,
+        "y": 20,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max(otelcol_process_memory_rss)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "In per receiver",
+      "description": "otlp = push från tjänsterna. prometheus/postgresql = pull som Collectorn gör själv.",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_spans[1m]))",
+          "legendFormat": "spans · {{receiver}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records[1m]))",
+          "legendFormat": "logs · {{receiver}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "C",
+          "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_metric_points[1m]))",
+          "legendFormat": "metrics · {{receiver}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "spans · otlp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "logs · otlp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "metrics · otlp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "metrics · prometheus"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "metrics · postgresql"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Processors: in → ut (det som försvinner är filtrerat/samplat)",
+      "description": "filter/noise tar bort health checks och DEBUG innan något lagras.",
+      "gridPos": {
+        "x": 8,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (processor) (rate(otelcol_processor_incoming_items{processor=~\"filter.*\"}[1m]))",
+          "legendFormat": "in · {{processor}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum by (processor) (rate(otelcol_processor_outgoing_items{processor=~\"filter.*\"}[1m]))",
+          "legendFormat": "ut · {{processor}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "C",
+          "expr": "sum(rate({\"otelcol_processor_filter_spans.filtered\"}[1m]))",
+          "legendFormat": "bortfiltrerade spans (/health)",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "D",
+          "expr": "sum(rate({\"otelcol_processor_filter_logs.filtered\"}[1m]))",
+          "legendFormat": "bortfiltrerade loggar (DEBUG)",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bortfiltrerade spans (/health)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bortfiltrerade loggar (DEBUG)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "in · filter/noise"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ut · filter/noise"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Tail sampling: beslut per policy",
+      "description": "errors och slow behålls alltid. 'rest' styrs av TRACE_SAMPLING_PERCENT i .env (100 = allt). Prova 10.",
+      "gridPos": {
+        "x": 16,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (policy) (rate(otelcol_processor_tail_sampling_count_traces_sampled{sampled=\"true\"}[1m]))",
+          "legendFormat": "behåll · {{policy}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum(rate(otelcol_processor_tail_sampling_global_count_traces_sampled{sampled=\"false\"}[1m]))",
+          "legendFormat": "släng",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "behåll · errors"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "behåll · slow"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "behåll · rest"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "släng"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Ut per exporter",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans[1m]))",
+          "legendFormat": "spans → {{exporter}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records[1m]))",
+          "legendFormat": "logs → {{exporter}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "C",
+          "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points[1m]))",
+          "legendFormat": "metrics → {{exporter}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "spans → otlp_grpc/tempo"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "logs → otlp_http/loki"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "metrics → otlp_http/prometheus"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Batch-storlek (färre, större skrivningar)",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(otelcol_processor_batch_batch_send_size_bucket[2m])))",
+          "legendFormat": "p50 items per batch",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum(rate(otelcol_processor_batch_timeout_trigger_send[1m]))",
+          "legendFormat": "batchar skickade p.g.a. timeout /s",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p50 items per batch"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batchar skickade p.g.a. timeout /s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "③ Lagring – Loki · Tempo · Prometheus tar emot",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Loki: loggrader/s",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(loki_distributor_lines_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Loki: bytes/s",
+      "description": "",
+      "gridPos": {
+        "x": 4,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(loki_distributor_bytes_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Tempo: spans/s",
+      "description": "",
+      "gridPos": {
+        "x": 8,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(tempo_distributor_spans_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Tempo: aktiva traces",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(tempo_ingester_live_traces)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Prometheus: aktiva serier",
+      "description": "Antal tidsserier i minnet. Växer den okontrollerat: cardinality-problem (se dashboard 05).",
+      "gridPos": {
+        "x": 16,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max(prometheus_tsdb_head_series)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 50000,
+                "color": "#FFB400"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Prometheus: samples/s",
+      "description": "",
+      "gridPos": {
+        "x": 20,
+        "y": 40,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Mottaget per backend (samma tidsaxel)",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(loki_distributor_lines_received_total[1m]))",
+          "legendFormat": "Loki · loggrader/s",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum(rate(tempo_distributor_spans_received_total[1m]))",
+          "legendFormat": "Tempo · spans/s",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "C",
+          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total[1m]))",
+          "legendFormat": "Prometheus · samples/s",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tempo · spans/s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Loki · loggrader/s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Prometheus · samples/s"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "row",
+      "title": "④ Grafana – nästa steg",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 27,
+      "type": "text",
+      "title": "",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": null,
+      "targets": [],
+      "options": {
+        "mode": "markdown",
+        "content": "\n**Följ en request genom allt:** öppna **02 · Plattform · Översikt** → klicka på en **exemplar-punkt** (◆) i p95-grafen → tracen öppnas i Tempo → klicka **Logs for this span** → Loki visar loggarna för just det `trace_id`.\n\n**Simulera incident:** knappen *slow* i chatt-UI:t (http://localhost:8080) eller `./scripts/incident.sh slow`. Se p95 och GPU gå upp, följ kedjan metrics → traces → logs.\n"
+      },
+      "transparent": true
+    }
+  ]
+}

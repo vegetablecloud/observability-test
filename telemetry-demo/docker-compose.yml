@@ -1,0 +1,244 @@
+# =============================================================================
+#  Telemetry-demo: en AI-applikation + en komplett OpenTelemetry/Grafana-stack
+#
+#  APPLIKATION (det "andra team" äger – de PUSHAR OTLP till Collectorn)
+#    frontend (C#) → backend (C#) → algorithm (Python)
+#                              └──→ ai-chat (Python, RAG) → qdrant, llm (vLLM)
+#                    backend → postgres
+#
+#  TREDJEPART (du äger inte koden – DU HÄMTAR (pull) deras /metrics)
+#    llm (vLLM /metrics), qdrant (/metrics), postgres (SQL-statistik)
+#
+#  INFRA (pull av Prometheus)      node-exporter · cadvisor · dcgm-exporter
+#  OBSERVABILITY                   otel-collector → loki · tempo · prometheus → grafana
+#
+#  Start:  docker compose up -d --build     UI: http://localhost:8080
+#          Grafana: http://localhost:3000   (anonym admin, inget lösenord)
+# =============================================================================
+name: telemetry-demo
+
+# Samma OTel-konfiguration för alla instrumenterade tjänster. Det här är
+# "kontraktet" du ger andra team: endpoint + resource-attribut. Resten är deras SDK.
+x-otel-env: &otel-env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=demo,host.name=dgx-spark
+  OTEL_METRIC_EXPORT_INTERVAL: "10000"
+  OTEL_METRICS_EXEMPLAR_FILTER: trace_based
+
+# .NET: styr loggnivå vid källan – ramverkets INFO-loggar per HTTP-anrop är mest brus.
+x-dotnet-logging: &dotnet-logging
+  Logging__LogLevel__Default: Information
+  Logging__LogLevel__Microsoft.AspNetCore: Warning
+  Logging__LogLevel__System.Net.Http: Warning
+
+x-otel-python: &otel-python
+  <<: *otel-env
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: otlp
+  OTEL_PYTHON_LOG_CORRELATION: "true"
+  OTEL_SEMCONV_STABILITY_OPT_IN: http          # stabila HTTP-metricnamn, samma som .NET
+  OTEL_PYTHON_FASTAPI_EXCLUDE_SPANS: receive,send   # ta bort ASGI-interna mini-spans (brus)
+
+x-py-health: &py-health
+  test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8080/health')"]
+  interval: 10s
+  timeout: 3s
+  retries: 12
+
+services:
+  # ------------------------------------------------------------------ APP ----
+  frontend:
+    build: ./services/frontend
+    ports: ["8080:8080"]
+    environment:
+      <<: [*otel-env, *dotnet-logging]
+      OTEL_SERVICE_NAME: frontend
+      BACKEND_URL: http://backend:8080
+      GRAFANA_PUBLIC_URL: ${GRAFANA_PUBLIC_URL:-http://localhost:3000}
+    depends_on: [backend, otel-collector]
+
+  backend:
+    build: ./services/backend
+    environment:
+      <<: [*otel-env, *dotnet-logging]
+      OTEL_SERVICE_NAME: backend
+      ALGORITHM_URL: http://algorithm:8080
+      AI_CHAT_URL: http://ai-chat:8080
+      POSTGRES_CONNECTION: Host=postgres;Username=demo;Password=demo;Database=demo
+      BAD_CARDINALITY: ${BAD_CARDINALITY:-false}
+    depends_on: [postgres, algorithm, ai-chat, otel-collector]
+
+  algorithm:
+    build: ./services/algorithm
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: algorithm
+    healthcheck: *py-health
+    depends_on: [otel-collector]
+
+  ai-chat:
+    build: ./services/ai-chat
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: ai-chat
+      QDRANT_URL: http://qdrant:6333
+      LLM_BASE_URL: http://llm:8000/v1
+      LLM_MODEL: local-model
+      LLM_TIMEOUT_S: ${LLM_TIMEOUT_S:-2.5}
+    healthcheck: *py-health
+    depends_on: [qdrant, otel-collector]
+
+  loadgen:
+    build: ./services/loadgen
+    environment:
+      TARGET_URL: http://frontend:8080
+      RPS: ${RPS:-2}
+    depends_on: [frontend]
+
+  # ----------------------------------------------------- TREDJEPART / DATA ---
+  # Profil "sim" (default): mock av vLLM + simulerad dcgm-exporter, ingen GPU krävs.
+  llm:
+    profiles: [sim]
+    build: ./services/llm-mock
+    environment:
+      MODEL_NAME: local-model
+      SIMULATE_GPU: "true"
+    networks:
+      default:
+        aliases: [dcgm-exporter]   # Prometheus skrapar "dcgm-exporter:9400" oavsett profil
+
+  # Profil "gpu" (på DGX Spark): riktig vLLM + riktig dcgm-exporter.
+  #   COMPOSE_PROFILES=gpu docker compose up -d
+  vllm:
+    profiles: [gpu]
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:latest}
+    entrypoint: ["vllm", "serve"]
+    command:
+      - ${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+      - --served-model-name=local-model
+      - --port=8000
+      - --gpu-memory-utilization=${VLLM_GPU_MEM:-0.5}
+      # vLLM kan själv PUSHA traces via OTLP – då syns även spans inne i LLM-servern
+      - --otlp-traces-endpoint=grpc://otel-collector:4317
+      - --collect-detailed-traces=all
+    environment:
+      OTEL_SERVICE_NAME: vllm
+      OTEL_EXPORTER_OTLP_TRACES_INSECURE: "true"
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes: [hf-cache:/root/.cache/huggingface]
+    ipc: host
+    networks:
+      default:
+        aliases: [llm]
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  dcgm-exporter:
+    profiles: [gpu]
+    image: ${DCGM_IMAGE:-nvcr.io/nvidia/k8s/dcgm-exporter:4.2.3-4.1.3-ubuntu22.04}
+    cap_add: [SYS_ADMIN]
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    volumes: [qdrant-data:/qdrant/storage]
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: demo
+    volumes: [pg-data:/var/lib/postgresql/data]
+
+  # -------------------------------------------------------- INFRA-EXPORTERS --
+  node-exporter:
+    image: prom/node-exporter:v1.10.2
+    command: ["--path.rootfs=/host"]
+    pid: host
+    volumes: ["/:/host:ro"]
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    privileged: true
+    devices: ["/dev/kmsg"]
+    command: ["--docker_only=true", "--housekeeping_interval=10s", "--store_container_labels=false",
+              "--whitelisted_container_labels=com.docker.compose.service"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  # ---------------------------------------------------------- OBSERVABILITY --
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./observability/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro"]
+    environment:
+      TRACE_SAMPLING_PERCENT: ${TRACE_SAMPLING_PERCENT:-100}
+    ports:
+      - "4317:4317"   # OTLP gRPC  – exponerad så att externa team/tjänster kan pusha hit
+      - "4318:4318"   # OTLP HTTP  – även för browser-SDK
+    depends_on: [loki, tempo, prometheus]
+
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=3d
+      - --web.enable-otlp-receiver          # PUSH: OTLP-metrics från Collectorn
+      - --web.enable-remote-write-receiver  # PUSH: RED/service graph från Tempo
+      - --enable-feature=exemplar-storage   # exemplars -> länk till trace
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom-data:/prometheus
+    ports: ["9090:9090"]
+
+  loki:
+    image: grafana/loki:3.7.8
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./observability/loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    user: "0"
+    volumes:
+      - ./observability/tempo/config.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+
+  grafana:
+    image: grafana/grafana:13.2.2
+    ports: ["3000:3000"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_PANELS_DISABLE_SANITIZE_HTML: "true"   # för flödesdiagrammet i dashboard 01
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/01-telemetry-flow.json
+      GF_USERS_DEFAULT_THEME: dark
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus, loki, tempo]
+
+volumes:
+  qdrant-data:
+  pg-data:
+  prom-data:
+  loki-data:
+  tempo-data:
+  hf-cache:

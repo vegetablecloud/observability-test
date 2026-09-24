@@ -1,0 +1,49 @@
+# Prometheus tar emot metrics på TVÅ sätt:
+#   1. PUSH via OTLP från Collectorn   (/api/v1/otlp  – kräver --web.enable-otlp-receiver)
+#      + remote write från Tempo       (/api/v1/write – RED-metrics & service graph)
+#   2. PULL: skrapar exporters och backends själv (scrape_configs nedan)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Hur OTLP-metrics översätts till Prometheus-labels.
+otlp:
+  # Resource-attribut som blir labels på VARJE serie. Håll listan kort (cardinality!)
+  promote_resource_attributes:
+    - service.name
+    - service.namespace
+    - service.version
+    - deployment.environment.name
+  keep_identifying_resource_attributes: true
+
+storage:
+  tsdb:
+    out_of_order_time_window: 10m   # OTLP-data kan komma lite i oordning
+
+scrape_configs:
+  # ---- Infrastruktur (pull) -------------------------------------------------
+  - job_name: node-exporter          # värdmaskinen: CPU, RAM, disk, nät
+    static_configs: [{ targets: ["node-exporter:9100"] }]
+  - job_name: cadvisor               # per container: CPU, minne, nät
+    scrape_interval: 15s
+    static_configs: [{ targets: ["cadvisor:8080"] }]
+    metric_relabel_configs:          # släng serier för cgroups utan container-namn
+      - source_labels: [name]
+        regex: ""
+        action: drop
+  - job_name: dcgm-exporter          # GPU (simulerad i mock-läget, riktig med --profile gpu)
+    scrape_interval: 10s
+    static_configs: [{ targets: ["dcgm-exporter:9400"] }]
+
+  # ---- Observability-stacken övervakar sig själv (pull) ---------------------
+  - job_name: otel-collector
+    static_configs: [{ targets: ["otel-collector:8888"] }]
+  - job_name: loki
+    static_configs: [{ targets: ["loki:3100"] }]
+  - job_name: tempo
+    static_configs: [{ targets: ["tempo:3200"] }]
+  - job_name: grafana
+    static_configs: [{ targets: ["grafana:3000"] }]
+  - job_name: prometheus
+    static_configs: [{ targets: ["localhost:9090"] }]
