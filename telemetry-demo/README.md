@@ -9,6 +9,7 @@ Tjänsterna är medvetet enkla. Det är **telemetrin** som ska vara fullständig
 
 ```bash
 cd telemetry-demo
+cp .env.example .env               # profiler och experiment-reglage
 docker compose up -d --build        # ~15 containers, första bygget tar några minuter
 open http://localhost:8080          # chatt-UI:t (frontend)
 open http://localhost:3000          # Grafana, startar på 01 · Telemetriflödet
@@ -165,7 +166,7 @@ COMPOSE_PROFILES=gpu VLLM_MODEL=Qwen/Qwen2.5-1.5B-Instruct docker compose up -d 
 
 ```
 docker-compose.yml               alla containers + OTel-miljövariablerna (kontraktet)
-.env                             profiler och experiment-reglage
+.env.example                     mall för .env (profiler och experiment-reglage)
 services/frontend|backend        C#  – Program.cs visar hela OTel-setupen (~15 rader)
 services/algorithm|ai-chat       Python – zero-code + manuella spans/metrics
 services/llm-mock                "tredjepart" utan SDK, bara /metrics

@@ -1,0 +1,4 @@
+# Lokala miljöfiler (kan innehålla tokens) – checka in .env.example istället
+.env
+.env.*
+!.env.example
