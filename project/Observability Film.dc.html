@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Roboto+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#000;} a{color:#FFB400;} a:hover{color:#FFC333;}</style>
+<script>window.OM_SCENES = '[{"name":"Hardvara","dur":124.5,"desc":"DGX Spark och dess hårdvarusignaler","nat":10},{"name":"Containers","dur":12,"desc":"20 containers dyker upp ovanpå maskinen"},{"name":"Signaler","dur":14,"desc":"Tjänsterna skickar logs, traces och metrics över OTLP"},{"name":"Collector","dur":10.9,"desc":"Collectorns pipeline: batch, filter, redaction, sampling","nat":16},{"name":"Lagring","dur":12,"desc":"Loki, Tempo och Prometheus tar emot varsin signal"},{"name":"Cardinality","dur":12,"desc":"Varning: user_id som label spränger antalet tidsserier"},{"name":"Grafana","dur":12,"desc":"Översikt av hela stacken, sedan in i Grafana"},{"name":"Metrics","dur":45.6,"desc":"p95 spikar 14:32, ett exemplar leder vidare","nat":15},{"name":"Traces","dur":16,"desc":"Trace-waterfall visar att LLM-anropet tar tiden"},{"name":"Logs","dur":13,"desc":"Loggar filtrerade på trace_id visar timeout och retry"},{"name":"Helheten","dur":16,"desc":"GPU-mättnad kopplas till latensen, tråden genom hela stacken"},{"name":"Slut","dur":12,"desc":"Tre frågor och slutbudskapet"}]';</script>
+<script>window.OM_PLAYBACK = '{"mode":"times","count":1}';</script>
+</helmet>
+<div style="position:fixed;inset:0;background:#000;">
+  <x-import component="ObservabilityFilm" from="./animations-v3.jsx ./observability-film.jsx" hint-size="100%,100%" style="width:100%;height:100%;"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motionEditor&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}"></script>
+</body>
+</html>

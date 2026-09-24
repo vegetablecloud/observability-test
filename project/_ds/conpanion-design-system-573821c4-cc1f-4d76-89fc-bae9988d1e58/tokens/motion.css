@@ -1,0 +1,13 @@
+:root{
+/* The guidelines define no motion language. These are the house rules for screen work:
+   short, mechanical, opacity and colour only. No bounce, no spring, no parallax. */
+--dur-fast:120ms; /* @kind other */
+--dur-base:180ms; /* @kind other */
+--dur-slow:240ms; /* @kind other */
+--ease-out:cubic-bezier(0.2,0,0,1); /* @kind other */
+--ease-in-out:cubic-bezier(0.4,0,0.2,1); /* @kind other */
+}
+@media (prefers-reduced-motion:reduce){:root{--dur-fast:0ms; /* @kind other */
+--dur-base:0ms; /* @kind other */
+--dur-slow:0ms; /* @kind other */
+}}

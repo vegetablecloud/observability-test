@@ -1,0 +1,7 @@
+/* Conpanion brand typefaces (Brand Identity Guidelines v1.0, section TYPOGRAFI).
+   Inter — Regular (400) and SemiBold (600) ONLY. No other weight is on-brand.
+   Roboto Mono — Regular (400) only, for detail copy, captions and CTAs.
+   Both are open-source and loaded from Google Fonts, so these are the real faces, not substitutes.
+   The wordmark is set in Visby CF Black (Connary Fagen). That licence is not included here:
+   never re-typeset the wordmark — always place the supplied logo asset from assets/. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Mono:wght@400&display=swap");

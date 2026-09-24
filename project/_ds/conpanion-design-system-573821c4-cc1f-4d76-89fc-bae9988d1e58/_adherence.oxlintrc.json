@@ -1,0 +1,362 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/brand/**",
+              "components/core/**",
+              "components/slides/**",
+              "slides/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Inter|Roboto Mono))/i]",
+        "message": "Font not provided by the design system. Available: Inter, Roboto Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='BulletList'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|level|style|key|ref|className|style|children)$/]",
+        "message": "<BulletList> doesn't accept that prop. Declared props: items, level, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|disabled|href|children|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, size, disabled, href, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|secondary|ghost)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'secondary' | 'ghost'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:accent|heading|eyebrow|children|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: accent, heading, eyebrow, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ContactBlock'] > JSXAttribute > JSXIdentifier[name!=/^(?:lines|style|key|ref|className|style|children)$/]",
+        "message": "<ContactBlock> doesn't accept that prop. Declared props: lines, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Eyebrow'] > JSXAttribute > JSXIdentifier[name!=/^(?:rule|children|style|key|ref|className|style|children)$/]",
+        "message": "<Eyebrow> doesn't accept that prop. Declared props: rule, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='IconCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:icon|iconAlt|heading|body|width|base|style|key|ref|className|style|children)$/]",
+        "message": "<IconCard> doesn't accept that prop. Declared props: icon, iconAlt, heading, body, width, base, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KeyMark'] > JSXAttribute > JSXIdentifier[name!=/^(?:color|height|style|key|ref|className|style|children)$/]",
+        "message": "<KeyMark> doesn't accept that prop. Declared props: color, height, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KeyMark'] > JSXAttribute[name.name='color'] > Literal[value!=/^(?:yellow|black|white)$/]",
+        "message": "<KeyMark> color must be one of 'yellow' | 'black' | 'white'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KeyPhoto'] > JSXAttribute > JSXIdentifier[name!=/^(?:src|height|focus|style|key|ref|className|style|children)$/]",
+        "message": "<KeyPhoto> doesn't accept that prop. Declared props: src, height, focus, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KeyPhoto'] > JSXAttribute[name.name='focus'] > Literal[value!=/^(?:xMidYMin|xMidYMid|xMidYMax)$/]",
+        "message": "<KeyPhoto> focus must be one of 'xMidYMin' | 'xMidYMid' | 'xMidYMax'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Logo'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|width|base|style|key|ref|className|style|children)$/]",
+        "message": "<Logo> doesn't accept that prop. Declared props: variant, width, base, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Logo'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:lockup|wordmark|onYellow)$/]",
+        "message": "<Logo> variant must be one of 'lockup' | 'wordmark' | 'onYellow'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SlideFrame'] > JSXAttribute > JSXIdentifier[name!=/^(?:ground|footerBar|mark|children|style|key|ref|className|style|children)$/]",
+        "message": "<SlideFrame> doesn't accept that prop. Declared props: ground, footerBar, mark, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SlideFrame'] > JSXAttribute[name.name='ground'] > Literal[value!=/^(?:paper|yellow|dark)$/]",
+        "message": "<SlideFrame> ground must be one of 'paper' | 'yellow' | 'dark'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SlideTitle'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|x|y|width|size|color|style|key|ref|className|style|children)$/]",
+        "message": "<SlideTitle> doesn't accept that prop. Declared props: children, x, y, width, size, color, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tag'] > JSXAttribute > JSXIdentifier[name!=/^(?:tone|children|style|key|ref|className|style|children)$/]",
+        "message": "<Tag> doesn't accept that prop. Declared props: tone, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tag'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:default|accent|dark)$/]",
+        "message": "<Tag> tone must be one of 'default' | 'accent' | 'dark'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TechLogo'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|height|base|style|key|ref|className|style|children)$/]",
+        "message": "<TechLogo> doesn't accept that prop. Declared props: name, height, base, style."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "BulletList": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "ContactBlock": {
+        "replaces": []
+      },
+      "Eyebrow": {
+        "replaces": []
+      },
+      "IconCard": {
+        "replaces": []
+      },
+      "KeyMark": {
+        "replaces": []
+      },
+      "KeyPhoto": {
+        "replaces": []
+      },
+      "Logo": {
+        "replaces": []
+      },
+      "SlideFrame": {
+        "replaces": []
+      },
+      "SlideTitle": {
+        "replaces": []
+      },
+      "Tag": {
+        "replaces": []
+      },
+      "TechLogo": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--accent",
+      "--accent-hover",
+      "--accent-press",
+      "--block-gap",
+      "--block-gap-tight",
+      "--border-hairline",
+      "--border-strong",
+      "--card-gutter",
+      "--cp-black",
+      "--cp-grey-200",
+      "--cp-grey-300",
+      "--cp-grey-50",
+      "--cp-grey-500",
+      "--cp-grey-700",
+      "--cp-white",
+      "--cp-yellow",
+      "--cp-yellow-hover",
+      "--cp-yellow-press",
+      "--dur-base",
+      "--dur-fast",
+      "--dur-slow",
+      "--ease-in-out",
+      "--ease-out",
+      "--font-body",
+      "--font-heading",
+      "--font-mono",
+      "--fs-body",
+      "--fs-body-2",
+      "--fs-body-3",
+      "--fs-body-4",
+      "--fs-caption",
+      "--fs-cover-name",
+      "--fs-display",
+      "--fs-fine",
+      "--fs-h1",
+      "--fs-h2",
+      "--fs-h3",
+      "--fs-lead",
+      "--fs-meta",
+      "--fs-section",
+      "--fs-small",
+      "--fs-title",
+      "--fs-web-body",
+      "--fw-regular",
+      "--fw-semibold",
+      "--icon-brand",
+      "--lh-body",
+      "--lh-caption",
+      "--lh-display",
+      "--lh-heading",
+      "--lh-subhead",
+      "--lh-tight",
+      "--radius-none",
+      "--radius-sm",
+      "--slide-footer-h",
+      "--slide-gutter",
+      "--slide-h",
+      "--slide-margin-top",
+      "--slide-margin-x",
+      "--slide-mark-h",
+      "--slide-mark-w",
+      "--slide-mark-x",
+      "--slide-mark-y",
+      "--slide-w",
+      "--space-1",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-7",
+      "--space-8",
+      "--stroke-hairline",
+      "--stroke-strong",
+      "--surface-brand",
+      "--surface-card",
+      "--surface-dark",
+      "--surface-page",
+      "--surface-sunken",
+      "--text-muted",
+      "--text-on-dark",
+      "--text-on-yellow",
+      "--text-primary",
+      "--text-secondary",
+      "--track-body",
+      "--track-detail",
+      "--track-headline",
+      "--track-subhead"
+    ],
+    "tokenKinds": {
+      "--cp-yellow": "color",
+      "--cp-black": "color",
+      "--cp-grey-300": "color",
+      "--cp-grey-50": "color",
+      "--cp-white": "color",
+      "--cp-grey-700": "color",
+      "--cp-grey-500": "color",
+      "--cp-grey-200": "color",
+      "--cp-yellow-hover": "color",
+      "--cp-yellow-press": "color",
+      "--text-primary": "font",
+      "--text-secondary": "font",
+      "--text-muted": "font",
+      "--text-on-yellow": "font",
+      "--text-on-dark": "font",
+      "--surface-page": "color",
+      "--surface-card": "color",
+      "--surface-sunken": "color",
+      "--surface-dark": "color",
+      "--surface-brand": "color",
+      "--accent": "color",
+      "--accent-hover": "color",
+      "--accent-press": "color",
+      "--border-hairline": "color",
+      "--border-strong": "color",
+      "--icon-brand": "color",
+      "--font-heading": "font",
+      "--font-body": "font",
+      "--font-mono": "font",
+      "--fw-regular": "other",
+      "--fw-semibold": "other",
+      "--lh-display": "other",
+      "--lh-heading": "other",
+      "--lh-subhead": "other",
+      "--lh-body": "other",
+      "--lh-caption": "other",
+      "--track-headline": "spacing",
+      "--track-subhead": "spacing",
+      "--track-body": "spacing",
+      "--track-detail": "spacing",
+      "--fs-display": "spacing",
+      "--fs-h1": "spacing",
+      "--fs-h2": "spacing",
+      "--fs-h3": "spacing",
+      "--fs-lead": "spacing",
+      "--fs-web-body": "spacing",
+      "--fs-small": "spacing",
+      "--fs-caption": "spacing",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-7": "spacing",
+      "--space-8": "spacing",
+      "--block-gap": "spacing",
+      "--block-gap-tight": "spacing",
+      "--slide-margin-x": "spacing",
+      "--slide-margin-top": "spacing",
+      "--slide-gutter": "spacing",
+      "--card-gutter": "spacing",
+      "--radius-none": "radius",
+      "--radius-sm": "radius",
+      "--stroke-hairline": "color",
+      "--stroke-strong": "color",
+      "--dur-fast": "other",
+      "--dur-base": "other",
+      "--dur-slow": "other",
+      "--ease-out": "other",
+      "--ease-in-out": "other",
+      "--slide-w": "spacing",
+      "--slide-h": "spacing",
+      "--slide-footer-h": "spacing",
+      "--slide-mark-x": "spacing",
+      "--slide-mark-y": "spacing",
+      "--slide-mark-w": "spacing",
+      "--slide-mark-h": "spacing",
+      "--fs-section": "spacing",
+      "--fs-cover-name": "spacing",
+      "--fs-title": "spacing",
+      "--fs-body": "spacing",
+      "--fs-body-2": "spacing",
+      "--fs-body-3": "spacing",
+      "--fs-body-4": "spacing",
+      "--fs-meta": "spacing",
+      "--fs-fine": "spacing",
+      "--lh-tight": "other"
+    },
+    "fontFamilies": [
+      "Inter",
+      "Roboto Mono"
+    ]
+  }
+}

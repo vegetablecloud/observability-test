@@ -1,0 +1,23 @@
+:root{
+--slide-w:1280px;
+--slide-h:720px;
+--slide-footer-h:38px;      /* yellow bar across the bottom of every content slide */
+--slide-mark-x:1178px;      /* key mark position, top-right */
+--slide-mark-y:38px;
+--slide-mark-w:48px;
+--slide-mark-h:101px;
+
+/* PowerPoint point sizes expressed in px on the 1280x720 stage (1pt = 1.333px) */
+--fs-section:58.7px;   /* 44pt — yellow section-divider title */
+--fs-cover-name:37.3px;/* 28pt — cover name / cover headline */
+--fs-title:32px;       /* 24pt — slide title */
+--fs-body:26.7px;      /* 20pt — body level 1 */
+--fs-body-2:24px;      /* 18pt — body level 2, section subtitle */
+--fs-body-3:21.3px;    /* 16pt — body level 3 */
+--fs-body-4:18.7px;    /* 14pt — body level 4/5 */
+--fs-meta:16px;        /* 12pt — date, footer, slide number */
+--fs-fine:14px;        /* 10.5pt — cover contact lines */
+--lh-tight:0.9; /* @kind other */
+}
+a{color:var(--cp-black);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+a:hover{color:var(--cp-black);text-decoration-color:var(--cp-yellow);text-decoration-thickness:3px}

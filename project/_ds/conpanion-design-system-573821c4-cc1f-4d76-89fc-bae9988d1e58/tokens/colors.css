@@ -1,0 +1,37 @@
+:root{
+/* Primary palette — Brand Identity Guidelines v1.0, FÄRG / PRIMÄR PALETTE.
+   Four colours. Imperial Yellow is the only accent; everything else is black, white and grey. */
+--cp-yellow:#FFB400;      /* Imperial Yellow — R255 G180 B0 / C0 M29 Y100 K0 */
+--cp-black:#000000;       /* Black — K100 */
+--cp-grey-300:#D6D6D6;    /* Grey 300 — K20 */
+--cp-grey-50:#FAFAFA;     /* Grey 50 — K5 */
+--cp-white:#FFFFFF;
+
+/* Derived neutrals — not in the guideline sheet; pure K steps between Black and Grey 300,
+   for body-secondary text, hairlines and hover grounds. Never introduce a hue here. */
+--cp-grey-700:#4D4D4D;
+--cp-grey-500:#707070;
+--cp-grey-200:#EDEDED;
+
+/* Derived interaction values for Imperial Yellow (screen only) */
+--cp-yellow-hover:#FFC333;
+--cp-yellow-press:#E6A200;
+
+/* Semantic aliases */
+--text-primary:var(--cp-black);
+--text-secondary:var(--cp-grey-700);
+--text-muted:var(--cp-grey-500);
+--text-on-yellow:var(--cp-black);
+--text-on-dark:var(--cp-white);
+--surface-page:var(--cp-grey-50);
+--surface-card:var(--cp-white);
+--surface-sunken:var(--cp-grey-200);
+--surface-dark:var(--cp-black);
+--surface-brand:var(--cp-yellow);
+--accent:var(--cp-yellow);
+--accent-hover:var(--cp-yellow-hover);
+--accent-press:var(--cp-yellow-press);
+--border-hairline:var(--cp-grey-300);
+--border-strong:var(--cp-black);
+--icon-brand:var(--cp-yellow);
+}

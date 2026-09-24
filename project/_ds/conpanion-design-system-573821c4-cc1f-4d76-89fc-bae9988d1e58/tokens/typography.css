@@ -1,0 +1,32 @@
+:root{
+--font-heading:Inter,"Helvetica Neue",Arial,sans-serif;   /* Inter SemiBold 600 */
+--font-body:Inter,"Helvetica Neue",Arial,sans-serif;      /* Inter Regular 400 */
+--font-mono:"Roboto Mono",ui-monospace,"SFMono-Regular",Menlo,monospace; /* detail copy */
+
+--fw-regular:400; /* @kind other */
+--fw-semibold:600; /* @kind other */
+
+/* Leading multipliers — TYPOGRAFI / RADAVSTÅND. Bigger type, tighter leading. */
+--lh-display:0.8; /* @kind other */   /* extra-large headers, size x 0.8 */
+--lh-heading:0.9; /* @kind other */   /* headers, size x 0.9 */
+--lh-subhead:1; /* @kind other */     /* subheaders, set solid */
+--lh-body:1.2; /* @kind other */      /* body copy, set loose */
+--lh-caption:1.2; /* @kind other */   /* captions, set loose */
+
+/* Tracking — TYPOGRAFI / TECKENAVSTÅND. Guideline units /1000 = em. */
+--track-headline:-0.025em;  /* -25 */
+--track-subhead:-0.01em;    /* -10 */
+--track-body:0em;           /* 0 */
+--track-detail:0.05em;      /* 50, detail + mono copy */
+
+/* Web / document type scale. Steps are deliberately far apart: the guidelines require
+   obvious contrast between levels (1X / 3X / 10X), never 18pt body under a 24pt heading. */
+--fs-display:96px;
+--fs-h1:64px;
+--fs-h2:40px;
+--fs-h3:28px;
+--fs-lead:20px;
+--fs-web-body:16px;
+--fs-small:14px;
+--fs-caption:12px;
+}

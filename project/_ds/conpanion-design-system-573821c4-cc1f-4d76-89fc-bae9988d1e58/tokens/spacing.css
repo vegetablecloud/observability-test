@@ -1,0 +1,25 @@
+:root{
+/* Base spacing scale. Vertical rhythm between text blocks is set from cap height
+   (TYPOGRAFI / AVSTÅND): one cap height between blocks, half a cap height for tight pairs. */
+--space-1:4px;
+--space-2:8px;
+--space-3:16px;
+--space-4:20px;
+--space-5:30px;
+--space-6:38px;
+--space-7:52px;
+--space-8:88px;
+
+/* Cap-height-derived block spacing for Inter (cap height ~0.727em) */
+--block-gap:0.727em;      /* one cap height */
+--block-gap-tight:0.36em; /* half a cap height */
+
+--slide-margin-x:88px;      /* PPT master title/body left+right margin */
+--slide-margin-top:38px;    /* PPT master title y */
+--slide-gutter:16px;        /* two-column content gutter */
+--card-gutter:30px;         /* icon-card column gutter */
+--radius-none:0px;          /* the brand is square-cornered everywhere */
+--radius-sm:2px;
+--stroke-hairline:1px;
+--stroke-strong:2px;
+}
