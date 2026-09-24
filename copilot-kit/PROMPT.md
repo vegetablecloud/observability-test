@@ -25,7 +25,17 @@ Sluta handskriva dashboard-JSON. Skapa en generator `<sökväg>/build_dashboards
 query-hjälpare per datakälla). Varje dashboard blir en kort funktion. JSON-filerna blir
 byggprodukter som skrivs av scriptet till samma sökväg som idag.
 
+## Grafana MCP (verktyget `grafana`)
+Du har läsåtkomst till vår riktiga Grafana. Gissa inte, fråga Grafana:
+datakällor och uid, metric-namn, label-värden, Loki-labels, och kör varje query du
+tänker använda för att se att den ger data. Skriv ALDRIG dashboards direkt till Grafana.
+Allt går via generatorn i repot.
+
 ## Arbeta i den här ordningen
+0. KARTLÄGG DATAN. Via Grafana MCP: vilka tjänster finns (service_name eller job) och vilka
+   signaler skickar varje tjänst (metrics, loggar, traces)? Finns histogram för latens,
+   trace_id i loggarna, exemplars? Skriv en kort tabell tjänst × signal och lista luckor i
+   instrumenteringen som begränsar vad dashboards kan visa. Det är inget fel, men säg det.
 1. INVENTERA. Läs varje befintlig dashboard-JSON och skriv en kort tabell per dashboard:
    uid, titel, vem den är till för, vilken fråga den svarar på, panelerna (titel, typ,
    query, enhet) och vad som är svagt (saknar beskrivning/enhet, regnbågsfärger,

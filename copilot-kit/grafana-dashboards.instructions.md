@@ -85,6 +85,16 @@ Dessa regler gäller allt arbete med Grafana-dashboards i repot. Målet är dash
 - Filtrera bort brus (health checks, interna routes) i frågan, inte i efterhand.
 - Aldrig högkardinalitets-labels (user_id, request_id) i `by (...)` eller legend.
 
+### Verifiera mot riktig data (Grafana MCP)
+
+Om Grafana MCP-servern är ansluten ska du **använda den istället för att gissa**:
+- Lista datakällor och deras `uid` innan du skriver queries.
+- Lista metric-namn och label-värden i Prometheus, och labels i Loki, för det du ska visa.
+- **Kör varje ny query** och kontrollera att den ger data innan den läggs i en panel.
+- Hämta befintliga dashboards och deras panel-queries som utgångspunkt.
+- Rendera gärna en panel som bild för att se resultatet, om rendering finns.
+- **Skriv aldrig dashboards direkt till Grafana via MCP.** Ändringar går via generatorn och en PR.
+
 ## 7. Layout
 
 - 24 kolumner. En rad ska summera till 24 (t.ex. 6×4 stats, 2×12 eller 3×8 grafer).

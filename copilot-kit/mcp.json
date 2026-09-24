@@ -1,0 +1,28 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "grafana-token",
+      "description": "Grafana service account token (rollen Viewer räcker)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "grafana": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "GRAFANA_URL",
+        "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "grafana/mcp-grafana",
+        "-t", "stdio",
+        "--disable-write"
+      ],
+      "env": {
+        "GRAFANA_URL": "https://<er-grafana>",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${input:grafana-token}"
+      }
+    }
+  }
+}

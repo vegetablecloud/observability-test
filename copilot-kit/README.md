@@ -6,6 +6,19 @@ berättar något istället för att bara visa data.
 
 ## Så här använder du det (i jobbrepot)
 
+0. **Grafana MCP (rekommenderas).** Då kan agenten fråga er riktiga Grafana vilka metrics,
+   labels och datakällor som finns, och köra queries innan den använder dem. Det tar bort
+   gissandet.
+   - Skapa ett *service account* i Grafana med rollen **Viewer** och skapa en token.
+   - Kopiera `mcp.json` till `.vscode/mcp.json` och byt `GRAFANA_URL`. VS Code frågar efter
+     token vid start. Kräver Docker Desktop (imagen `grafana/mcp-grafana`).
+   - `--disable-write` gör servern läsbar men inte skrivbar. Det är avsiktligt:
+     dashboards ska ändras via generatorn och en PR, inte direkt i Grafana.
+   - Starta servern i VS Code (*MCP: List Servers → grafana → Start*) och slå på
+     verktygen i Agent mode (verktygsikonen i chatten).
+   - I Copilot Enterprise måste policyn **"MCP servers in Copilot"** vara påslagen för
+     organisationen, och en eventuell allowlist måste tillåta servern. Fråga er
+     GitHub-admin om servern inte syns.
 1. **Regler.** Kopiera `grafana-dashboards.instructions.md` till
    `.github/instructions/grafana-dashboards.instructions.md`.
    Copilot läser den automatiskt för filer som matchar `applyTo`. Justera globben
