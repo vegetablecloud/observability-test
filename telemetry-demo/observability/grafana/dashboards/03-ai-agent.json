@@ -1,0 +1,2398 @@
+{
+  "uid": "ai-agent",
+  "title": "03 · AI-agent · LangGraph",
+  "description": "Vad gör agenten, steg för steg, och exakt var går det fel?",
+  "tags": [
+    "telemetry-demo",
+    "ai"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "version": 1,
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "templating": {
+    "list": [
+      {
+        "type": "textbox",
+        "name": "trace_id",
+        "label": "trace_id (välj en körning i tabellen)",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
+      "type": "dashboards",
+      "tags": [
+        "telemetry-demo"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Körningar / min",
+      "description": "Hur många gånger grafen körs från START till END per minut.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(agent_runs_total[5m])) * 60",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Lyckade körningar",
+      "description": "Körningar som nådde respond. Resten: recursion_limit (loop), llm_unavailable, guard_blocked. Se ⑤ Utfall.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(agent_runs_total{outcome=\"ok\"}[5m])) / sum(rate(agent_runs_total[5m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFB400"
+              },
+              {
+                "value": 0.97,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "p95 · hela körningen",
+      "description": "Från START till END. Vilken nod som äter tiden syns i ③.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_run_duration_seconds_bucket[5m])))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 3,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Steg per körning",
+      "description": "Antal noder som körs per fråga. Normalt 5 (guard → agent → tools → agent → respond). Stiger den: agenten loopar.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(agent_run_steps_sum[5m])) / sum(rate(agent_run_steps_count[5m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 6,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Verktygsfel",
+      "description": "Tool calls som kastade fel. Felet skickas tillbaka till modellen (som LangGraphs ToolNode), så körningen kan ändå lyckas.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "(sum(rate(agent_tool_calls_total{outcome=\"error\"}[5m])) or vector(0)) / sum(rate(agent_tool_calls_total[5m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 0.05,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Tokens / min",
+      "description": "In + ut, alla LLM-anrop agenten gör. Kostnaden (eller GPU-tiden) för agenten.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(gen_ai_client_token_usage_sum{service_name=\"ai-chat\"}[5m])) * 60",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "① Grafen · ritad i koden  |  körd just nu",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "text",
+      "title": "Så är grafen ritad (graph.py)",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<svg viewBox=\"0 0 860 360\" width=\"100%\" style=\"max-height:360px\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Roboto Mono, ui-monospace, monospace\">\n<style>\n  .bx rect { fill:#0D0D0D; stroke:#4D4D4D; stroke-width:1.5; transition:stroke .15s; }\n  .bx.acc rect { stroke:#FFB400; stroke-width:2; }\n  .bx.ext rect { stroke-dasharray:5 4; }\n  a:hover .bx rect { stroke:#FFB400; fill:#141414; }\n  .t { fill:#FFFFFF; font-size:15px; } .s { fill:#707070; font-size:12px; }\n  .col { fill:#707070; font-size:12px; letter-spacing:1.5px; }\n  .lbl { fill:#707070; font-size:11px; } .lbl.hot { fill:#FFB400; }\n  path.req { stroke:#FFB400; stroke-width:2.2; fill:none; stroke-dasharray:7 6; animation:flow 1.2s linear infinite; }\n  path.pull { stroke:#707070; stroke-width:1.5; fill:none; stroke-dasharray:3 5; }\n  path.tel { stroke:#4D4D4D; stroke-width:1.2; fill:none; }\n  @keyframes flow { to { stroke-dashoffset:-26; } }\n</style>\n<defs><marker id=\"ah\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#FFB400\"/></marker><marker id=\"ag\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#707070\"/></marker></defs>\n<path class=\"req\" d=\"M110 172 L150 178\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M320 178 L380 178\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"356\" y=\"172\">ok</text>\n<path class=\"pull\" d=\"M235 206 L475 280\" marker-end=\"url(#ag)\"/>\n<text class=\"lbl \" x=\"361\" y=\"237\">blockerad</text>\n<path class=\"req\" d=\"M475 150 L475 86\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"481\" y=\"112\">tool_calls</text>\n<path class=\"pull\" d=\"M475 86 L475 150\" marker-end=\"url(#ag)\"/>\n<path class=\"req\" d=\"M475 206 L475 280\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"481\" y=\"237\">svar klart</text>\n<path class=\"req\" d=\"M570 308 L640 308\" marker-end=\"url(#ah)\"/>\n<path class=\"tel\" d=\"M570 58 L640 25\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M570 58 L640 85\" marker-end=\"url(#ag)\"/>\n<g class=\"bx\"><rect x=\"20\" y=\"150\" width=\"90\" height=\"44\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"174\">START</text><text class=\"s\" x=\"32\" y=\"193\"></text></g>\n<g class=\"bx\"><rect x=\"150\" y=\"150\" width=\"170\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"162\" y=\"174\">guard_input</text><text class=\"s\" x=\"162\" y=\"193\">PII · validering</text></g>\n<g class=\"bx acc\"><rect x=\"380\" y=\"150\" width=\"190\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"392\" y=\"174\">agent</text><text class=\"s\" x=\"392\" y=\"193\">gemma väljer verktyg</text></g>\n<g class=\"bx\"><rect x=\"380\" y=\"30\" width=\"190\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"392\" y=\"54\">tools</text><text class=\"s\" x=\"392\" y=\"73\">parallella tool calls</text></g>\n<g class=\"bx ext\"><rect x=\"640\" y=\"0\" width=\"200\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"652\" y=\"24\">search_documents</text><text class=\"s\" x=\"652\" y=\"43\">→ rag-api</text></g>\n<g class=\"bx ext\"><rect x=\"640\" y=\"60\" width=\"200\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"652\" y=\"84\">get_project_insight</text><text class=\"s\" x=\"652\" y=\"103\">→ algorithm</text></g>\n<g class=\"bx\"><rect x=\"380\" y=\"280\" width=\"190\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"392\" y=\"304\">respond</text><text class=\"s\" x=\"392\" y=\"323\">svar + källor</text></g>\n<g class=\"bx\"><rect x=\"640\" y=\"286\" width=\"90\" height=\"44\" rx=\"2\"/><text class=\"t\" x=\"652\" y=\"310\">END</text><text class=\"s\" x=\"652\" y=\"329\"></text></g>\n</svg>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": false,
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 10,
+        "h": 11
+      }
+    },
+    {
+      "type": "nodeGraph",
+      "title": "Grafen som den körs just nu",
+      "description": "Ur metrics, senaste 5 min. Varje pil = en kant i grafen som faktiskt används, siffran i noden = anrop/min. Blir pilen tools ⇄ agent tjockare än START → guard_input loopar agenten (fler varv per fråga).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "edges",
+          "expr": "label_replace(label_join(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(sum by (langgraph_from, langgraph_to) (rate(langgraph_transitions_total[5m])) * 60, \"source\", \"$1\", \"langgraph_from\", \"(.*)\"), \"source\", \"START\", \"source\", \"__start__\"), \"source\", \"END\", \"source\", \"__end__\"), \"target\", \"$1\", \"langgraph_to\", \"(.*)\"), \"target\", \"START\", \"target\", \"__start__\"), \"target\", \"END\", \"target\", \"__end__\"), \"id\", \"→\", \"source\", \"target\"), \"field\", \"mainstat\", \"\", \"\")",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "options": {
+        "nodes": {},
+        "edges": {}
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns",
+            "valueLabel": "field",
+            "keepLabels": [
+              "id",
+              "source",
+              "target",
+              "field"
+            ]
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "id": 9,
+      "gridPos": {
+        "x": 10,
+        "y": 5,
+        "w": 14,
+        "h": 11
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "② Noderna · var går tiden, och vilken nod felar?",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 per nod",
+      "description": "agent (gul) är LLM-anropet och brukar dominera. Går tools upp: ett verktyg eller dess backend är långsamt.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, langgraph_node) (rate(langgraph_node_duration_seconds_bucket[1m])))",
+          "legendFormat": "{{langgraph_node}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "guard_input"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agent"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tools"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "respond"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Andel av körningens tid",
+      "description": "Hur stor del av den totala körtiden varje nod står för (summa över alla körningar, 5 min).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (langgraph_node) (rate(langgraph_node_duration_seconds_sum[5m])) / scalar(sum(rate(agent_run_duration_seconds_sum[5m])))",
+          "legendFormat": "{{langgraph_node}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#D6D6D6"
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#D6D6D6"
+          },
+          "max": 1,
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agent"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 36,
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Fel per nod · senaste 5 min",
+      "description": "Antal gånger en nod kastade fel. Noden som felar är den som stoppar grafen (tools fångar verktygsfel själv).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (langgraph_node) (increase(langgraph_node_duration_seconds_count{outcome=\"error\"}[5m])) or sum by (langgraph_node) (increase(langgraph_node_duration_seconds_count[5m])) * 0",
+          "legendFormat": "{{langgraph_node}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#4D4D4D"
+              },
+              {
+                "value": 1,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 36,
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 18,
+        "y": 17,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "③ Verktygen · vad anropar agenten, och vad går sönder?",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Anrop / min per verktyg",
+      "description": "Staplat: lyckade (grå/vit) och fel (gul) per verktyg.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name) (rate(agent_tool_calls_total{outcome=\"ok\"}[1m])) * 60",
+          "legendFormat": "{{gen_ai_tool_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum by (gen_ai_tool_name) (rate(agent_tool_calls_total{outcome=\"error\"}[1m])) * 60",
+          "legendFormat": "FEL · {{gen_ai_tool_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "search_documents"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "get_project_insight"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "FEL.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 15,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 per verktyg",
+      "description": "get_project_insight ska ligga på några ms (förberäknat). Hoppar den till ~1 s: förberäkningen har stannat (cache miss).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, gen_ai_tool_name) (rate(agent_tool_duration_seconds_bucket[1m])))",
+          "legendFormat": "{{gen_ai_tool_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "search_documents"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "get_project_insight"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 8,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "type": "table",
+      "title": "Verktygsfel · typ",
+      "description": "HTTPStatusError = verktygets backend svarade med fel (t.ex. 404 för okänt projekt). ToolArgumentError = modellen skickade trasiga argument.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (gen_ai_tool_name, error_type) (increase(agent_tool_calls_total{outcome=\"error\"}[15m]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Antal (15 min)"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        },
+        "sortBy": [
+          {
+            "displayName": "Antal (15 min)",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "gen_ai_tool_name": "Verktyg",
+              "error_type": "Feltyp",
+              "Value": "Antal (15 min)"
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "id": 17,
+      "gridPos": {
+        "x": 16,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "④ LLM:en i agenten",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM-anrop per körning",
+      "description": "Normalt 2: ett för att välja verktyg, ett för att svara. Fler = fler varv i loopen agent ⇄ tools.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=\"ai-chat\", gen_ai_operation_name=\"chat\"}[1m])) / sum(rate(agent_runs_total[1m]))",
+          "legendFormat": "LLM-anrop / körning",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB400"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 19,
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens / min",
+      "description": "Input = prompt + verktygsresultat (växer med varje varv). Output = det modellen genererar.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{service_name=\"ai-chat\"}[1m])) * 60",
+          "legendFormat": "{{gen_ai_token_type}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 40,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "input"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "output"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 20,
+      "gridPos": {
+        "x": 6,
+        "y": 35,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM p95 (agentens vy) vs vLLM",
+      "description": "Skillnaden mellan linjerna = nätverk, kö och omförsök. Ligger de ihop: modellen själv är långsam.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gen_ai_client_operation_duration_seconds_bucket{service_name=\"ai-chat\", gen_ai_operation_name=\"chat\"}[1m])))",
+          "legendFormat": "agenten ser (inkl. omförsök)",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate({\"vllm:e2e_request_latency_seconds_bucket\", model_name=\"gemma\"}[1m])))",
+          "legendFormat": "vLLM e2e",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agenten ser (inkl. omförsök)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vLLM e2e"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 21,
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Omförsök & misslyckade LLM-anrop",
+      "description": "Räknat ur loggarna (Loki). Omförsök är ok, 'gav upp' betyder att användaren fick ett fel.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"ai-chat\"} |= \"llm_request_retry\" [1m])) or vector(0)",
+          "legendFormat": "omförsök / min",
+          "editorMode": "code",
+          "queryType": "range"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "B",
+          "expr": "sum(count_over_time({service_name=\"ai-chat\"} |= \"LLMUnavailable\" [1m])) or vector(0)",
+          "legendFormat": "gav upp / min",
+          "editorMode": "code",
+          "queryType": "range"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "omförsök / min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "gav upp / min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 22,
+      "gridPos": {
+        "x": 18,
+        "y": 35,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "id": 23,
+      "type": "row",
+      "title": "⑤ Utfall",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Körningar per utfall",
+      "description": "ok = grått. Allt gult är körningar som inte nådde fram: recursion_limit (agenten loopade), llm_unavailable (gemma svarade inte).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (outcome) (rate(agent_runs_total[1m])) * 60",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 2,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ok"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recursion_limit"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "llm_unavailable"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "guard_blocked"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 24,
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "heatmap",
+      "title": "Körningens längd · fördelning",
+      "description": "Varje kolumn = en minut, varje ruta = hur många körningar som tog så lång tid. Ljusare = fler. Ett nytt band högt upp = en ny sorts långsamhet.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (le) (increase(agent_run_duration_seconds_bucket[1m]))",
+          "legendFormat": "{{le}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code",
+          "format": "heatmap"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "yAxis": {
+          "axisPlacement": "left",
+          "unit": "s",
+          "decimals": 1
+        },
+        "color": {
+          "mode": "opacity",
+          "fill": "#FFB400",
+          "exponent": 0.5,
+          "scale": "exponential",
+          "steps": 64,
+          "reverse": false
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "filterValues": {
+          "le": 1e-09
+        },
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "yHistogram": true,
+          "showColorScale": true
+        },
+        "legend": {
+          "show": true
+        },
+        "exemplars": {
+          "color": "#FFFFFF"
+        },
+        "cellValues": {
+          "unit": "short"
+        }
+      },
+      "id": 25,
+      "gridPos": {
+        "x": 12,
+        "y": 44,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 26,
+      "type": "row",
+      "title": "⑥ Körningarna · klicka på en rad för hela tracen",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Senaste körningarna",
+      "description": "En rad per agentkörning senaste 10 min: utfall, vägen genom grafen (trail) och antal steg. Klicka på Span för hela waterfallen.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{ name = \"invoke_agent chat-agent\" } | select(span.agent.outcome, span.agent.trail, span.agent.steps)",
+          "limit": 30,
+          "tableType": "spans",
+          "spss": 3,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Utfall"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ok": {
+                        "color": "#FFFFFF",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".+",
+                      "result": {
+                        "color": "#FFB400",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tid"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Antal steg"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Utfall"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Span"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "agent.outcome": "Utfall",
+              "agent.trail": "Väg genom grafen",
+              "agent.steps": "Antal steg"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true,
+              "Name": true,
+              "traceIdHidden": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "agent.outcome": 1,
+              "agent.steps": 2,
+              "Duration": 3,
+              "agent.trail": 4,
+              "Span ID": 5
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Start",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "10m",
+      "id": 27,
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 12,
+        "h": 10
+      }
+    },
+    {
+      "type": "table",
+      "title": "Här kraschade det · nod och verktyg",
+      "description": "Varje span i agenten som fick status ERROR: vilken nod, vilket verktyg, vilket steg och vilken feltyp. Det är svaret på 'var i programmet kraschar det?'. Senaste 15 min.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{ resource.service.name = \"ai-chat\" && status = error && (name =~ \"node .*\" || name =~ \"execute_tool .*\") } | select(span.langgraph.node, span.gen_ai.tool.name, span.error.type, span.langgraph.step)",
+          "limit": 30,
+          "tableType": "spans",
+          "spss": 3,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tid"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Feltyp"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "langgraph.node": "Nod",
+              "gen_ai.tool.name": "Verktyg",
+              "error.type": "Feltyp",
+              "langgraph.step": "LangGraph-steg"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true,
+              "traceIdHidden": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "Name": 1,
+              "error.type": 2,
+              "langgraph.node": 3,
+              "gen_ai.tool.name": 4,
+              "langgraph.step": 5,
+              "Duration": 6,
+              "Span ID": 7
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Start",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "timeFrom": "15m",
+      "id": 28,
+      "gridPos": {
+        "x": 12,
+        "y": 53,
+        "w": 12,
+        "h": 10
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Agentens loggar · node_failed · tool_failed · recursion_limit",
+      "description": "Samma fel som tabellen ovan, med detaljer. Varje rad har trace_id: expandera och klicka 'Öppna trace'.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "A",
+          "expr": "{service_name=\"ai-chat\"} |~ \"node_failed|tool_failed|agent_recursion_limit|llm_request_failed|LLMUnavailable\"",
+          "legendFormat": "",
+          "editorMode": "code",
+          "queryType": "range",
+          "direction": "backward"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": true
+      },
+      "id": 29,
+      "gridPos": {
+        "x": 0,
+        "y": 63,
+        "w": 24,
+        "h": 8
+      }
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "⑦ En körning i detalj · klistra in ett trace_id högst upp och fäll ut",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 71,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "type": "traces",
+          "title": "Waterfall för $trace_id",
+          "description": "Hela körningen: invoke_agent → varje nod → chat gemma / execute_tool. Klicka på en span för attribut: langgraph.step, gen_ai.tool.call.arguments, gen_ai.output.messages, error.type.",
+          "targets": [
+            {
+              "datasource": {
+                "type": "tempo",
+                "uid": "tempo"
+              },
+              "refId": "A",
+              "queryType": "traceql",
+              "query": "$trace_id",
+              "limit": 20,
+              "filters": []
+            }
+          ],
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "options": {},
+          "id": 31,
+          "gridPos": {
+            "x": 0,
+            "y": 72,
+            "w": 24,
+            "h": 16
+          }
+        },
+        {
+          "type": "logs",
+          "title": "Loggar för $trace_id · i tidsordning",
+          "description": "Agentens berättelse i text: node_done node=agent step=2 ... tool_done tool=search_documents ...",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "refId": "A",
+              "expr": "{deployment_environment_name=\"demo\"} | trace_id=\"$trace_id\"",
+              "legendFormat": "",
+              "editorMode": "code",
+              "queryType": "range",
+              "direction": "forward"
+            }
+          ],
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "sortOrder": "Ascending",
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": true
+          },
+          "id": 32,
+          "gridPos": {
+            "x": 0,
+            "y": 88,
+            "w": 24,
+            "h": 10
+          }
+        }
+      ]
+    }
+  ]
+}

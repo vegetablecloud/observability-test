@@ -1,9 +1,10 @@
 {
   "uid": "telemetry-flow",
   "title": "01 · Telemetriflödet",
-  "description": "Hur telemetri flyttar sig: källor (push/pull) → OTel Collector → Loki/Tempo/Prometheus → Grafana",
+  "description": "Hur rör sig telemetrin, och tappar vi något på vägen?",
   "tags": [
-    "telemetry-demo"
+    "telemetry-demo",
+    "plattform"
   ],
   "editable": true,
   "graphTooltip": 1,
@@ -22,16 +23,44 @@
     "list": []
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
   },
   "links": [
     {
-      "title": "Telemetry-demo",
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
       "type": "dashboards",
       "tags": [
         "telemetry-demo"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true,
       "targetBlank": false,
@@ -40,52 +69,43 @@
   ],
   "panels": [
     {
-      "id": 1,
       "type": "text",
       "title": "",
       "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<svg viewBox=\"0 0 1600 360\" width=\"100%\" style=\"max-height:360px\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Roboto Mono, ui-monospace, monospace\">\n<style>\n  .bx rect { fill:#0D0D0D; stroke:#4D4D4D; stroke-width:1.5; transition:stroke .15s; }\n  .bx.acc rect { stroke:#FFB400; stroke-width:2; }\n  .bx.ext rect { stroke-dasharray:5 4; }\n  a:hover .bx rect { stroke:#FFB400; fill:#141414; }\n  .t { fill:#FFFFFF; font-size:15px; } .s { fill:#707070; font-size:12px; }\n  .col { fill:#707070; font-size:12px; letter-spacing:1.5px; }\n  .lbl { fill:#707070; font-size:11px; } .lbl.hot { fill:#FFB400; }\n  path.req { stroke:#FFB400; stroke-width:2.2; fill:none; stroke-dasharray:7 6; animation:flow 1.2s linear infinite; }\n  path.pull { stroke:#707070; stroke-width:1.5; fill:none; stroke-dasharray:3 5; }\n  path.tel { stroke:#4D4D4D; stroke-width:1.2; fill:none; }\n  @keyframes flow { to { stroke-dashoffset:-26; } }\n</style>\n<defs><marker id=\"ah\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#FFB400\"/></marker><marker id=\"ag\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#707070\"/></marker></defs>\n<text class=\"col\" x=\"20\" y=\"20\">① KÄLLOR · push (överst) och pull (streckat)</text>\n<text class=\"col\" x=\"520\" y=\"20\">② OTEL COLLECTOR</text>\n<text class=\"col\" x=\"1180\" y=\"20\">③ LAGRING</text>\n<text class=\"col\" x=\"1420\" y=\"20\">④ GRAFANA</text>\n<path class=\"req\" d=\"M370 70 L520 95\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"451\" y=\"76\">OTLP push</text>\n<path class=\"pull\" d=\"M370 250 L800 140\" marker-end=\"url(#ag)\"/>\n<text class=\"lbl \" x=\"591\" y=\"189\">Collectorn hämtar</text>\n<path class=\"pull\" d=\"M370 300 L1180 205\" marker-end=\"url(#ag)\"/>\n<text class=\"lbl \" x=\"781\" y=\"246\">Prometheus skrapar</text>\n<path class=\"tel\" d=\"M1080 95 L1180 65\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1080 95 L1180 135\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M800 140 L1180 205\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1260 160 L1260 180\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1340 65 L1420 135\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1340 135 L1420 135\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1340 205 L1420 135\" marker-end=\"url(#ag)\"/>\n<g class=\"bx\"><rect x=\"20\" y=\"50\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"74\">frontend · c#</text><text class=\"s\" x=\"32\" y=\"93\"></text></g>\n<g class=\"bx\"><rect x=\"200\" y=\"50\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"212\" y=\"74\">backend · c#</text><text class=\"s\" x=\"212\" y=\"93\"></text></g>\n<g class=\"bx acc\"><rect x=\"20\" y=\"100\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"124\">ai-chat · py</text><text class=\"s\" x=\"32\" y=\"143\"></text></g>\n<g class=\"bx\"><rect x=\"200\" y=\"100\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"212\" y=\"124\">rag-api · py</text><text class=\"s\" x=\"212\" y=\"143\"></text></g>\n<g class=\"bx\"><rect x=\"20\" y=\"150\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"174\">algorithm · py</text><text class=\"s\" x=\"32\" y=\"193\"></text></g>\n<g class=\"bx ext\"><rect x=\"200\" y=\"150\" width=\"170\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"212\" y=\"174\">andra team</text><text class=\"s\" x=\"212\" y=\"193\">→ :4317/:4318</text></g>\n<g class=\"bx ext\"><rect x=\"20\" y=\"230\" width=\"110\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"254\">vllm-gemma</text><text class=\"s\" x=\"32\" y=\"273\"></text></g>\n<g class=\"bx ext\"><rect x=\"140\" y=\"230\" width=\"110\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"152\" y=\"254\">vllm-embed</text><text class=\"s\" x=\"152\" y=\"273\"></text></g>\n<g class=\"bx ext\"><rect x=\"260\" y=\"230\" width=\"110\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"272\" y=\"254\">postgres</text><text class=\"s\" x=\"272\" y=\"273\"></text></g>\n<g class=\"bx ext\"><rect x=\"20\" y=\"280\" width=\"110\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"304\">paradedb</text><text class=\"s\" x=\"32\" y=\"323\"></text></g>\n<g class=\"bx ext\"><rect x=\"140\" y=\"280\" width=\"230\" height=\"40\" rx=\"2\"/><text class=\"t\" x=\"152\" y=\"304\">node · cadvisor · dcgm</text><text class=\"s\" x=\"152\" y=\"323\"></text></g>\n<g class=\"bx acc\"><rect x=\"520\" y=\"50\" width=\"560\" height=\"90\" rx=\"2\"/><text class=\"t\" x=\"532\" y=\"74\">OTel Collector</text><text class=\"s\" x=\"532\" y=\"93\">memory_limiter · filter · redact · tail_sampling · batch</text></g>\n<g class=\"bx\"><rect x=\"1180\" y=\"40\" width=\"160\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1192\" y=\"64\">loki</text><text class=\"s\" x=\"1192\" y=\"83\">logs</text></g>\n<g class=\"bx\"><rect x=\"1180\" y=\"110\" width=\"160\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1192\" y=\"134\">tempo</text><text class=\"s\" x=\"1192\" y=\"153\">traces → span-metrics</text></g>\n<g class=\"bx\"><rect x=\"1180\" y=\"180\" width=\"160\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1192\" y=\"204\">prometheus</text><text class=\"s\" x=\"1192\" y=\"223\">metrics</text></g>\n<g class=\"bx\"><rect x=\"1420\" y=\"110\" width=\"160\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1432\" y=\"134\">grafana</text><text class=\"s\" x=\"1432\" y=\"153\">frågar alla tre</text></g>\n<path class=\"req\" d=\"M20 348 L60 348\"/><text class=\"lbl\" x=\"68\" y=\"352\">en fråga genom stacken</text><path class=\"pull\" d=\"M260 348 L300 348\"/><text class=\"lbl\" x=\"308\" y=\"352\">pull · du äger inte koden</text><path class=\"tel\" d=\"M520 348 L560 348\"/><text class=\"lbl\" x=\"568\" y=\"352\">telemetri</text><text class=\"lbl\" x=\"720\" y=\"352\" style=\"fill:#D6D6D6\">klicka på en ruta för dess dashboard</text>\n</svg>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 1,
       "gridPos": {
         "x": 0,
         "y": 0,
         "w": 24,
-        "h": 10
-      },
-      "datasource": null,
-      "targets": [],
-      "options": {
-        "mode": "html",
-        "content": "\n<div style=\"font-family:Inter,system-ui,sans-serif;color:#fff;padding:4px 8px\">\n<svg viewBox=\"0 0 1600 330\" width=\"100%\" style=\"max-height:330px\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Roboto Mono, monospace\">\n  <defs>\n    <marker id=\"a\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#D6D6D6\"/></marker>\n    <marker id=\"ay\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#FFB400\"/></marker>\n  </defs>\n  <g font-size=\"13\" fill=\"#707070\" letter-spacing=\"1\">\n    <text x=\"20\" y=\"20\">① KÄLLOR</text><text x=\"560\" y=\"20\">② OTEL COLLECTOR</text><text x=\"1060\" y=\"20\">③ LAGRING</text><text x=\"1400\" y=\"20\">④ GRAFANA</text>\n  </g>\n  <!-- push -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"52\" fill=\"#FFB400\">PUSH · OTLP · tjänsten äger sin SDK</text>\n    <rect x=\"20\" y=\"62\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"32\" y=\"84\" fill=\"#fff\">frontend · c#</text>\n    <rect x=\"220\" y=\"62\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"232\" y=\"84\" fill=\"#fff\">backend · c#</text>\n    <rect x=\"20\" y=\"104\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"32\" y=\"126\" fill=\"#fff\">algorithm · py</text>\n    <rect x=\"220\" y=\"104\" width=\"190\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#FFB400\"/><text x=\"232\" y=\"126\" fill=\"#fff\">ai-chat · py</text>\n    <text x=\"20\" y=\"160\" fill=\"#707070\">+ andra team → :4317 / :4318</text>\n  </g>\n  <!-- pull by collector -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"196\" fill=\"#D6D6D6\">PULL · Collectorn hämtar · du äger inte koden</text>\n    <rect x=\"20\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"30\" y=\"228\" fill=\"#fff\">vLLM</text>\n    <rect x=\"152\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"162\" y=\"228\" fill=\"#fff\">qdrant</text>\n    <rect x=\"284\" y=\"206\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"294\" y=\"228\" fill=\"#fff\">postgres</text>\n  </g>\n  <!-- pull by prometheus -->\n  <g font-size=\"14\">\n    <text x=\"20\" y=\"272\" fill=\"#D6D6D6\">PULL · Prometheus skrapar infra</text>\n    <rect x=\"20\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"30\" y=\"304\" fill=\"#fff\">node-exp</text>\n    <rect x=\"152\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"162\" y=\"304\" fill=\"#fff\">cAdvisor</text>\n    <rect x=\"284\" y=\"282\" width=\"126\" height=\"34\" fill=\"#0D0D0D\" stroke=\"#707070\" stroke-dasharray=\"5 4\"/><text x=\"294\" y=\"304\" fill=\"#fff\">dcgm (GPU)</text>\n  </g>\n  <!-- collector -->\n  <rect x=\"560\" y=\"40\" width=\"420\" height=\"220\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\" stroke-width=\"2\"/>\n  <g font-size=\"13\" fill=\"#fff\">\n    <rect x=\"580\" y=\"60\" width=\"110\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"592\" y=\"82\" fill=\"#707070\">RECEIVE</text>\n    <text x=\"592\" y=\"110\">otlp</text><text x=\"592\" y=\"134\">prometheus</text><text x=\"592\" y=\"158\">postgresql</text>\n    <rect x=\"705\" y=\"60\" width=\"140\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"717\" y=\"82\" fill=\"#707070\">PROCESS</text>\n    <text x=\"717\" y=\"106\">memory_limiter</text><text x=\"717\" y=\"128\">filter (brus)</text><text x=\"717\" y=\"150\">redact (PII)</text><text x=\"717\" y=\"172\">tail_sampling</text><text x=\"717\" y=\"194\">batch</text>\n    <rect x=\"860\" y=\"60\" width=\"104\" height=\"180\" fill=\"none\" stroke=\"#4D4D4D\"/><text x=\"872\" y=\"82\" fill=\"#707070\">EXPORT</text>\n    <text x=\"872\" y=\"110\">loki</text><text x=\"872\" y=\"134\">tempo</text><text x=\"872\" y=\"158\">prometheus</text>\n  </g>\n  <!-- arrows sources -> collector -->\n  <path fill=\"none\" d=\"M410 100 L560 100\" stroke=\"#FFB400\" stroke-width=\"3\" marker-end=\"url(#ay)\"/>\n  <text x=\"440\" y=\"92\" font-size=\"12\" fill=\"#FFB400\">logs·traces·metrics</text>\n  <path fill=\"none\" d=\"M560 222 L410 222\" stroke=\"#D6D6D6\" stroke-width=\"2\" stroke-dasharray=\"6 5\" marker-end=\"url(#a)\"/>\n  <text x=\"440\" y=\"214\" font-size=\"12\" fill=\"#D6D6D6\">GET /metrics</text>\n  <!-- stores -->\n  <g font-size=\"16\" fill=\"#fff\">\n    <rect x=\"1060\" y=\"44\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"78\">Loki</text><text x=\"1160\" y=\"78\" font-size=\"12\" fill=\"#707070\">LOGS</text>\n    <rect x=\"1060\" y=\"122\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"156\">Tempo</text><text x=\"1160\" y=\"156\" font-size=\"12\" fill=\"#707070\">TRACES</text>\n    <rect x=\"1060\" y=\"200\" width=\"250\" height=\"56\" fill=\"#0D0D0D\" stroke=\"#D6D6D6\"/><text x=\"1076\" y=\"234\">Prometheus</text><text x=\"1200\" y=\"234\" font-size=\"12\" fill=\"#707070\">METRICS</text>\n  </g>\n  <path fill=\"none\" d=\"M980 72 L1060 72\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M980 150 L1060 150\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M980 228 L1060 228\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <!-- tempo -> prometheus metrics generator -->\n  <path fill=\"none\" d=\"M1300 178 Q1340 190 1300 200\" stroke=\"#707070\" stroke-width=\"2\" fill=\"none\" stroke-dasharray=\"4 4\" marker-end=\"url(#a)\"/>\n  <text x=\"1318\" y=\"194\" font-size=\"11\" fill=\"#707070\">RED</text>\n  <!-- prometheus scrape infra -->\n  <path fill=\"none\" d=\"M1185 256 L1185 299 L410 299\" stroke=\"#D6D6D6\" stroke-width=\"2\" stroke-dasharray=\"6 5\" marker-end=\"url(#a)\"/>\n  <text x=\"700\" y=\"292\" font-size=\"12\" fill=\"#D6D6D6\">scrape (pull)</text>\n  <!-- grafana -->\n  <rect x=\"1400\" y=\"44\" width=\"180\" height=\"212\" fill=\"#FFB400\"/>\n  <text x=\"1418\" y=\"80\" font-size=\"20\" font-weight=\"600\" font-family=\"Inter\" fill=\"#000\">Grafana</text>\n  <g font-size=\"12\" fill=\"#000\"><text x=\"1418\" y=\"110\">metric → exemplar</text><text x=\"1418\" y=\"132\">→ trace</text><text x=\"1418\" y=\"154\">→ logs (trace_id)</text><text x=\"1418\" y=\"190\">samma tidsaxel</text><text x=\"1418\" y=\"210\">samma service.name</text></g>\n  <path fill=\"none\" d=\"M1310 72 L1400 72\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M1310 150 L1400 150\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n  <path fill=\"none\" d=\"M1310 228 L1400 228\" stroke=\"#D6D6D6\" stroke-width=\"2\" marker-end=\"url(#a)\"/>\n</svg>\n</div>\n"
-      },
-      "transparent": true
+        "h": 11
+      }
     },
     {
       "id": 2,
       "type": "row",
-      "title": "① Källor – vem skickar vad? (push)",
+      "title": "① Källor · vem skickar vad?",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 10,
+        "y": 11,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 3,
       "type": "table",
-      "title": "Push-tjänster: telemetri per service.name",
-      "description": "Spans/s (Tempo span-metrics), aktiva metric-serier (Prometheus) och loggrader/s (Loki) per tjänst. Alla tre går att ställa mot varandra tack vare samma service.name.",
-      "gridPos": {
-        "x": 0,
-        "y": 11,
-        "w": 14,
-        "h": 8
-      },
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Mixed --"
-      },
+      "title": "Push-tjänster · telemetri per service.name",
+      "description": "Spans/s (Tempo span-metrics), aktiva metric-serier (Prometheus) och loggrader/s (Loki) per tjänst. Tre olika lager, samma service.name – därför går de att ställa mot varandra.",
       "targets": [
         {
           "datasource": {
@@ -98,6 +118,7 @@
           "range": false,
           "instant": true,
           "exemplar": false,
+          "editorMode": "code",
           "format": "table"
         },
         {
@@ -106,11 +127,12 @@
             "uid": "prometheus"
           },
           "refId": "B",
-          "expr": "count by (service_name) ({service_name=~\".+\", job!~\"llm-server|qdrant|postgresql\"})",
+          "expr": "count by (service_name) ({service_name=~\".+\", job!~\"vllm-.*|postgres|paradedb\"})",
           "legendFormat": "__auto",
           "range": false,
           "instant": true,
           "exemplar": false,
+          "editorMode": "code",
           "format": "table"
         },
         {
@@ -121,9 +143,14 @@
           "refId": "C",
           "expr": "sum by (service_name) (rate({service_name=~\".+\"}[2m]))",
           "legendFormat": "",
+          "editorMode": "code",
           "queryType": "instant"
         }
       ],
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -131,8 +158,10 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            }
-          }
+            },
+            "filterable": false
+          },
+          "links": []
         },
         "overrides": [
           {
@@ -165,7 +194,11 @@
         "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "show": false
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
         },
         "sortBy": [
           {
@@ -180,7 +213,8 @@
           "options": {
             "renameByName": {
               "service": "service_name"
-            }
+            },
+            "excludeByName": {}
           }
         },
         {
@@ -193,37 +227,133 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true
-            },
             "renameByName": {
               "service_name": "Tjänst",
               "Value #A": "Spans/s",
               "Value #B": "Metric-serier",
               "Value #C": "Loggrader/s"
+            },
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
             }
           }
         }
-      ]
+      ],
+      "id": 3,
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 9
+      }
     },
     {
-      "id": 4,
       "type": "stat",
-      "title": "Prometheus hämtar själv (pull)",
-      "description": "Scrape-mål i prometheus.yml: infrastruktur-exporters och observability-stacken själv.",
-      "gridPos": {
-        "x": 14,
-        "y": 11,
-        "w": 5,
-        "h": 8
-      },
+      "title": "Collectorn hämtar (pull)",
+      "description": "Tredjepart du inte äger: Collectorns prometheus- och postgresql-receivers hämtar och skickar vidare som OTLP.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (job) (up{job=~\"vllm-.*\"})",
+          "legendFormat": "{{job}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "max by (service_name) (postgresql_backends >= bool 0)",
+          "legendFormat": "{{service_name}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              }
+            ]
+          },
+          "links": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "#161616",
+                  "index": 0
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "#FFB400",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        }
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 6,
+        "h": 9
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus skrapar själv (pull)",
+      "description": "Scrape-mål i prometheus.yml: infrastruktur och observability-stacken själv.",
       "targets": [
         {
           "datasource": {
@@ -235,103 +365,17 @@
           "legendFormat": "{{job}}",
           "range": false,
           "instant": true,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#161616"
-              }
-            ]
-          },
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "1": {
-                  "text": "UP",
-                  "color": "#161616"
-                },
-                "0": {
-                  "text": "DOWN",
-                  "color": "#FFB400"
-                }
-              }
-            }
-          ]
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "background_solid",
-        "graphMode": "none",
-        "textMode": "value_and_name",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Collectorn hämtar (pull)",
-      "description": "Tredjepart du inte äger: Collectorns prometheus- och postgresql-receivers hämtar och skickar sedan vidare som OTLP.",
-      "gridPos": {
-        "x": 19,
-        "y": 11,
-        "w": 5,
-        "h": 8
-      },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "max by (job) (up{service_name!=\"\"})",
-          "legendFormat": "{{job}}",
-          "range": false,
-          "instant": true,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "B",
-          "expr": "clamp_max(sum(rate(otelcol_scraper_scraped_metric_points{receiver=\"postgresql\"}[2m])) > bool 0, 1)",
-          "legendFormat": "postgres",
-          "range": false,
-          "instant": true,
-          "exemplar": false
-        }
-      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "color": {
             "mode": "thresholds"
           },
@@ -344,17 +388,20 @@
               }
             ]
           },
+          "links": [],
           "mappings": [
             {
               "type": "value",
               "options": {
                 "1": {
                   "text": "UP",
-                  "color": "#161616"
+                  "color": "#161616",
+                  "index": 0
                 },
                 "0": {
                   "text": "DOWN",
-                  "color": "#FFB400"
+                  "color": "#FFB400",
+                  "index": 1
                 }
               }
             }
@@ -373,40 +420,40 @@
         "colorMode": "background_solid",
         "graphMode": "none",
         "textMode": "value_and_name",
-        "justifyMode": "auto",
+        "justifyMode": "center",
         "orientation": "horizontal",
         "wideLayout": true,
-        "showPercentChange": false
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        }
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 18,
+        "y": 12,
+        "w": 6,
+        "h": 9
       }
     },
     {
       "id": 6,
       "type": "row",
-      "title": "② OTel Collector – receive · process · export",
+      "title": "② OTel Collector · receive → process → export",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 19,
+        "y": 21,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 7,
       "type": "stat",
       "title": "In: spans/s",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Spans som Collectorn tagit emot (alla receivers).",
       "targets": [
         {
           "datasource": {
@@ -418,9 +465,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -436,6 +488,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -455,23 +508,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 8,
       "type": "stat",
       "title": "In: metric points/s",
-      "description": "",
-      "gridPos": {
-        "x": 4,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Metric-datapunkter in: OTLP från tjänsterna + det Collectorn hämtar själv.",
       "targets": [
         {
           "datasource": {
@@ -483,9 +532,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -501,6 +555,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -520,23 +575,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 4,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 9,
       "type": "stat",
       "title": "In: loggrader/s",
-      "description": "",
-      "gridPos": {
-        "x": 8,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Loggrader in, före filtrering.",
       "targets": [
         {
           "datasource": {
@@ -548,9 +599,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -566,6 +622,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -585,23 +642,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 10,
       "type": "stat",
       "title": "Refused / failed",
       "description": "Ska vara 0. Blir den gul: Collectorn eller en backend orkar inte (memory_limiter backar av eller exporten misslyckas).",
-      "gridPos": {
-        "x": 12,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "targets": [
         {
           "datasource": {
@@ -609,13 +662,18 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "sum(rate(otelcol_receiver_refused_spans[1m])) + sum(rate(otelcol_receiver_refused_log_records[1m])) + sum(rate(otelcol_receiver_refused_metric_points[1m])) + sum(rate(otelcol_exporter_send_failed_spans[1m]) or vector(0))",
+          "expr": "(sum(rate(otelcol_receiver_refused_spans[1m])) or vector(0)) + (sum(rate(otelcol_receiver_refused_log_records[1m])) or vector(0)) + (sum(rate(otelcol_receiver_refused_metric_points[1m])) or vector(0)) + (sum(rate(otelcol_exporter_send_failed_spans[1m])) or vector(0))",
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -635,6 +693,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 1
         },
         "overrides": []
@@ -654,23 +713,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 11,
       "type": "stat",
       "title": "Exporter-kö",
       "description": "Data som väntar på att skickas till Loki/Tempo/Prometheus. Växer den är en backend långsam.",
-      "gridPos": {
-        "x": 16,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "targets": [
         {
           "datasource": {
@@ -682,9 +737,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -703,7 +763,8 @@
                 "color": "#FFB400"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -722,23 +783,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 16,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 12,
       "type": "stat",
       "title": "Collector-minne",
-      "description": "",
-      "gridPos": {
-        "x": 20,
-        "y": 20,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Collectorns eget minne. memory_limiter börjar backa vid 80 % av gränsen.",
       "targets": [
         {
           "datasource": {
@@ -750,9 +807,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
@@ -767,7 +829,8 @@
                 "color": "#FFFFFF"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -786,23 +849,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 20,
+        "y": 22,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 13,
       "type": "timeseries",
       "title": "In per receiver",
       "description": "otlp = push från tjänsterna. prometheus/postgresql = pull som Collectorn gör själv.",
-      "gridPos": {
-        "x": 0,
-        "y": 24,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "targets": [
         {
           "datasource": {
@@ -814,7 +873,8 @@
           "legendFormat": "spans · {{receiver}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -826,7 +886,8 @@
           "legendFormat": "logs · {{receiver}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -838,31 +899,39 @@
           "legendFormat": "metrics · {{receiver}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -943,7 +1012,32 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "metrics · postgresql"
+              "options": "metrics · postgresql/app"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "metrics · postgresql/rag"
             },
             "properties": [
               {
@@ -971,29 +1065,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 14,
       "type": "timeseries",
-      "title": "Processors: in → ut (det som försvinner är filtrerat/samplat)",
-      "description": "filter/noise tar bort health checks och DEBUG innan något lagras.",
-      "gridPos": {
-        "x": 8,
-        "y": 24,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": "Filter: det som aldrig lagras",
+      "description": "filter/noise slänger health checks, FastAPI:s interna mini-spans och DEBUG-loggar innan något lagras.",
       "targets": [
         {
           "datasource": {
@@ -1001,11 +1092,12 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "sum by (processor) (rate(otelcol_processor_incoming_items{processor=~\"filter.*\"}[1m]))",
-          "legendFormat": "in · {{processor}}",
+          "expr": "sum(rate({\"otelcol_processor_filter_spans.filtered\"}[1m]))",
+          "legendFormat": "spans (/health, ASGI-brus)",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -1013,66 +1105,50 @@
             "uid": "prometheus"
           },
           "refId": "B",
-          "expr": "sum by (processor) (rate(otelcol_processor_outgoing_items{processor=~\"filter.*\"}[1m]))",
-          "legendFormat": "ut · {{processor}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "C",
-          "expr": "sum(rate({\"otelcol_processor_filter_spans.filtered\"}[1m]))",
-          "legendFormat": "bortfiltrerade spans (/health)",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "D",
           "expr": "sum(rate({\"otelcol_processor_filter_logs.filtered\"}[1m]))",
-          "legendFormat": "bortfiltrerade loggar (DEBUG)",
+          "legendFormat": "loggar (DEBUG)",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "bortfiltrerade spans (/health)"
+              "options": "spans (/health, ASGI-brus)"
             },
             "properties": [
               {
@@ -1087,32 +1163,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "bortfiltrerade loggar (DEBUG)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFB400"
-                }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    6,
-                    4
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "in · filter/noise"
+              "options": "loggar (DEBUG)"
             },
             "properties": [
               {
@@ -1120,21 +1171,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#D6D6D6"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ut · filter/noise"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFFFFF"
                 }
               },
               {
@@ -1155,29 +1191,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 14,
+      "gridPos": {
+        "x": 8,
+        "y": 26,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 15,
       "type": "timeseries",
-      "title": "Tail sampling: beslut per policy",
+      "title": "Tail sampling · beslut per policy",
       "description": "errors och slow behålls alltid. 'rest' styrs av TRACE_SAMPLING_PERCENT i .env (100 = allt). Prova 10.",
-      "gridPos": {
-        "x": 16,
-        "y": 24,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "targets": [
         {
           "datasource": {
@@ -1189,7 +1222,8 @@
           "legendFormat": "behåll · {{policy}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -1201,31 +1235,39 @@
           "legendFormat": "släng",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -1309,29 +1351,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 15,
+      "gridPos": {
+        "x": 16,
+        "y": 26,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 16,
       "type": "timeseries",
       "title": "Ut per exporter",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 32,
-        "w": 12,
-        "h": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Det som faktiskt lämnar Collectorn, per backend.",
       "targets": [
         {
           "datasource": {
@@ -1343,7 +1382,8 @@
           "legendFormat": "spans → {{exporter}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -1355,7 +1395,8 @@
           "legendFormat": "logs → {{exporter}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -1367,31 +1408,39 @@
           "legendFormat": "metrics → {{exporter}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -1450,29 +1499,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 12,
+        "h": 7
       }
     },
     {
-      "id": 17,
       "type": "timeseries",
-      "title": "Batch-storlek (färre, större skrivningar)",
-      "description": "",
-      "gridPos": {
-        "x": 12,
-        "y": 32,
-        "w": 12,
-        "h": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": "Batch-storlek · färre, större skrivningar",
+      "description": "batch-processorn samlar data innan export. Timeout-triggade batchar = lite trafik (skickas efter 2 s).",
       "targets": [
         {
           "datasource": {
@@ -1484,7 +1530,8 @@
           "legendFormat": "p50 items per batch",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -1493,34 +1540,42 @@
           },
           "refId": "B",
           "expr": "sum(rate(otelcol_processor_batch_timeout_trigger_send[1m]))",
-          "legendFormat": "batchar skickade p.g.a. timeout /s",
+          "legendFormat": "batchar p.g.a. timeout /s",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -1542,562 +1597,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "batchar skickade p.g.a. timeout /s"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#707070"
-                }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    6,
-                    4
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 18,
-      "type": "row",
-      "title": "③ Lagring – Loki · Tempo · Prometheus tar emot",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 39,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 19,
-      "type": "stat",
-      "title": "Loki: loggrader/s",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(rate(loki_distributor_lines_received_total[1m]))",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              }
-            ]
-          },
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 20,
-      "type": "stat",
-      "title": "Loki: bytes/s",
-      "description": "",
-      "gridPos": {
-        "x": 4,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(rate(loki_distributor_bytes_received_total[1m]))",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 21,
-      "type": "stat",
-      "title": "Tempo: spans/s",
-      "description": "",
-      "gridPos": {
-        "x": 8,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(rate(tempo_distributor_spans_received_total[1m]))",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              }
-            ]
-          },
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 22,
-      "type": "stat",
-      "title": "Tempo: aktiva traces",
-      "description": "",
-      "gridPos": {
-        "x": 12,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(tempo_ingester_live_traces)",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 23,
-      "type": "stat",
-      "title": "Prometheus: aktiva serier",
-      "description": "Antal tidsserier i minnet. Växer den okontrollerat: cardinality-problem (se dashboard 05).",
-      "gridPos": {
-        "x": 16,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "max(prometheus_tsdb_head_series)",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              },
-              {
-                "value": 50000,
-                "color": "#FFB400"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 24,
-      "type": "stat",
-      "title": "Prometheus: samples/s",
-      "description": "",
-      "gridPos": {
-        "x": 20,
-        "y": 40,
-        "w": 4,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total[1m]))",
-          "legendFormat": "__auto",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "#FFFFFF"
-              }
-            ]
-          },
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "value",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      }
-    },
-    {
-      "id": 25,
-      "type": "timeseries",
-      "title": "Mottaget per backend (samma tidsaxel)",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 45,
-        "w": 24,
-        "h": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(rate(loki_distributor_lines_received_total[1m]))",
-          "legendFormat": "Loki · loggrader/s",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "B",
-          "expr": "sum(rate(tempo_distributor_spans_received_total[1m]))",
-          "legendFormat": "Tempo · spans/s",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "C",
-          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total[1m]))",
-          "legendFormat": "Prometheus · samples/s",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisBorderShow": false,
-            "axisSoftMin": 0,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Tempo · spans/s"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFB400"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Loki · loggrader/s"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFFFFF"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Prometheus · samples/s"
+              "options": "batchar p.g.a. timeout /s"
             },
             "properties": [
               {
@@ -2129,45 +1629,437 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 17,
+      "gridPos": {
+        "x": 12,
+        "y": 34,
+        "w": 12,
+        "h": 7
       }
     },
     {
-      "id": 26,
+      "id": 18,
       "type": "row",
-      "title": "④ Grafana – nästa steg",
+      "title": "③ Lagring · vad backends tar emot",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 52,
+        "y": 41,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 27,
-      "type": "text",
-      "title": "",
-      "description": "",
+      "type": "stat",
+      "title": "Loki: loggrader/s",
+      "description": "Loggrader Loki tagit emot.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(loki_distributor_lines_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 19,
       "gridPos": {
         "x": 0,
-        "y": 53,
-        "w": 24,
+        "y": 42,
+        "w": 4,
         "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Loki: bytes/s",
+      "description": "Loggvolym in i Loki. Kostnaden för loggar följer den här siffran.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(loki_distributor_bytes_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      "datasource": null,
-      "targets": [],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": []
+        },
+        "overrides": []
+      },
       "options": {
-        "mode": "markdown",
-        "content": "\n**Följ en request genom allt:** öppna **02 · Plattform · Översikt** → klicka på en **exemplar-punkt** (◆) i p95-grafen → tracen öppnas i Tempo → klicka **Logs for this span** → Loki visar loggarna för just det `trace_id`.\n\n**Simulera incident:** knappen *slow* i chatt-UI:t (http://localhost:8080) eller `./scripts/incident.sh slow`. Se p95 och GPU gå upp, följ kedjan metrics → traces → logs.\n"
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
       },
-      "transparent": true
+      "id": 20,
+      "gridPos": {
+        "x": 4,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Tempo: spans/s",
+      "description": "Spans Tempo tagit emot, efter tail sampling.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(tempo_distributor_spans_received_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 21,
+      "gridPos": {
+        "x": 8,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Tempo: aktiva traces",
+      "description": "Traces som ingestern håller i minnet just nu.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(tempo_ingester_live_traces)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 22,
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus: aktiva serier",
+      "description": "Tidsserier i minnet. Växer den okontrollerat: cardinality-problem (se 09).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max(prometheus_tsdb_head_series)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 50000,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 23,
+      "gridPos": {
+        "x": 16,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus: samples/s",
+      "description": "Datapunkter per sekund in i Prometheus.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 24,
+      "gridPos": {
+        "x": 20,
+        "y": 42,
+        "w": 4,
+        "h": 4
+      }
     }
   ]
 }

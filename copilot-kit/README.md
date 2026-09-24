@@ -23,27 +23,38 @@ berättar något istället för att bara visa data.
    `.github/instructions/grafana-dashboards.instructions.md`.
    Copilot läser den automatiskt för filer som matchar `applyTo`. Justera globben
    efter var era dashboards ligger.
-2. **Referensexempel.** Kopiera
-   `telemetry-demo/observability/grafana/build_dashboards.py` till
-   `docs/reference/build_dashboards.example.py`.
-   Det är mönstret agenten ska lära sig av, inte något den ska kopiera.
+2. **Referensen.** Kopiera till jobbrepot:
+   | Från det här repot | Till jobbrepot |
+   |---|---|
+   | `copilot-kit/HANDOFF.md` | `docs/reference/HANDOFF.md` |
+   | `telemetry-demo/observability/grafana/` (dashlib/, boards/, build_dashboards.py, check_queries.py, provisioning/) | `docs/reference/grafana/` |
+   | `telemetry-demo/services/ai-chat/agent_otel.py` | `docs/reference/agent_otel.py` |
+   | `telemetry-demo/docs/kontrakt-for-team.md` | `docs/reference/kontrakt-for-team.md` |
+
+   Det är mönstret agenten ska lära sig av, inte något den ska kopiera. Det räcker **inte** med en
+   py-fil: dashboards blir bara bra om telemetrin under dem har rätt namn, och det visar
+   `agent_otel.py`, datakällorna och kontraktet.
 3. **Prompt.** Öppna Copilot Chat i *Agent mode*, fyll i `<...>` i `PROMPT.md` och klistra in.
    Börja med **en** dashboard, godkänn förslaget, och ta sedan resten.
 
 ## Vad agenten ska ta med sig från exemplet
 
-| Mönster | Var i `build_dashboards.py` |
+| Mönster | Var i referensen |
 |---|---|
-| Byggstenar överst, en `build_*()` per dashboard | `panel`, `stat`, `timeseries`, `table`, `logs`, `text`, `row`, `dashboard` |
-| Gemensamma queries som konstanter | `P95`, `UP_MAP` |
-| En accentfärg och fast färg per tjänst | `Y`, `SERVICE_COLORS`, `service_overrides()`, `color_override(dash=, width=)` |
-| Trösklar som färgar först när det spelar roll | `thresholds((None, WH), (2, Y))` + `th_style="dashed"` |
-| KPI-rad → trender → orsak bredvid verkan → drill-down → loggar | `build_overview()` (p95 bredvid GPU) |
-| Kapitel i flödets ordning | `build_flow()`: `row("① Källor …")`, `row("② OTel Collector …")` |
-| Flödesdiagram som SVG i en text-panel | `FLOW_SVG` |
-| Mixed-datakälla, tabell hopslagen på `service_name` | första tabellen i `build_flow()` |
+| Byggstenar i ett bibliotek, en fil per dashboard | `dashlib/panels.py`, `boards/bNN_*.py` |
+| Automatisk layout, ingen x/y för hand | `dashlib/board.py` (`Board.add`, `Board.row(collapsed=)`) |
+| Bygget stoppar på regelbrott | `dashlib/validate.py`, `build_dashboards.py --check` |
+| Varje query verifieras mot Grafana | `check_queries.py` |
+| En accentfärg, fast färg per tjänst, status OK/STÖRD/NERE | `dashlib/theme.py`, `dashlib/queries.py` |
+| Startsida med status per komponent och genvägar per roll | `boards/b00_start.py` |
+| Klickbar, animerad arkitekturkarta | `dashlib/diagram.py` |
+| LangGraph: grafen ritad bredvid grafen körd (node graph ur metrics) | `boards/b03_ai_agent.py` → `live_graph()` |
+| Var kraschade det: TraceQL med `status = error` per nod och verktyg | `boards/b03_ai_agent.py`, `b05_test_flow.py` |
+| Testflöde A→Ö: `test.run.id`, strukturell TraceQL, steg i tidsordning | `boards/b05_test_flow.py` |
+| Orsak bredvid verkan (p95 bredvid GPU och köer) | `boards/b02_platform_overview.py` |
+| Topp 5-containrar, upp/nere över tid | `boards/b06_containers.py` |
 | Klick från metric till trace till loggar | `exemplar=True` + `provisioning/datasources/datasources.yaml` |
-| Beskrivning på varje panel ("ska vara 0, blir den gul: …") | överallt |
+| Chaos-/deploy-markörer på alla grafer | `CHAOS_ANNOTATION` i `dashlib/board.py` |
 
 ## Tips
 

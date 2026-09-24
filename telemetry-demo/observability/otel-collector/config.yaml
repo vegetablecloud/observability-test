@@ -2,9 +2,10 @@
 # OpenTelemetry Collector – den gemensamma ingången för ALL telemetri
 #
 #   PUSH  (tjänsterna skickar själva, OTLP)      PULL  (Collectorn hämtar)
-#   frontend, backend, algorithm, ai-chat   ─┐   ┌─ llm-server /metrics  (vLLM)
-#   + ALLA externa team/produkter som       │   │  qdrant     /metrics
-#     pekar sin OTel-SDK hit (4317/4318)    │   │  postgres   (SQL-statistik)
+#   frontend, backend, ai-chat, rag-api,    ─┐   ┌─ vllm-gemma  /metrics  (chat-modellen)
+#   algorithm                               │   │  vllm-embed  /metrics  (embeddings)
+#   + ALLA externa team/produkter som       │   │  postgres    (app-DB, SQL-statistik)
+#     pekar sin OTel-SDK hit (4317/4318)    │   │  paradedb    (RAG-DB, SQL-statistik)
 #                                           ▼   ▼
 #                         receivers → processors → exporters
 #                                                     │
@@ -29,17 +30,18 @@ receivers:
   prometheus:
     config:
       scrape_configs:
-        - job_name: llm-server            # blir service.name = "llm-server"
+        - job_name: vllm-gemma            # blir service.name = "vllm-gemma"
           scrape_interval: 10s
           static_configs:
-            - targets: ["llm:8000"]
-        - job_name: qdrant
-          scrape_interval: 15s
+            - targets: ["vllm-gemma:8000"]
+        - job_name: vllm-embed
+          scrape_interval: 10s
           static_configs:
-            - targets: ["qdrant:6333"]
+            - targets: ["vllm-embed:8000"]
 
-  # ---- PULL: Collectorn loggar in i Postgres och läser statistik ------------
-  postgresql:
+  # ---- PULL: Collectorn loggar in i databaserna och läser statistik ---------
+  #      En receiver per instans. service.name sätts per pipeline nedan.
+  postgresql/app:
     endpoint: postgres:5432
     username: demo
     password: demo
@@ -47,6 +49,24 @@ receivers:
     collection_interval: 15s
     tls:
       insecure: true
+    metrics: &pg-extra                  # av som default – slå på det som är värt att se
+      postgresql.deadlocks: { enabled: true }
+      postgresql.database.locks: { enabled: true }
+      postgresql.sequential_scans: { enabled: true }
+      postgresql.temp_files: { enabled: true }
+      postgresql.blks_hit: { enabled: true }
+      postgresql.blks_read: { enabled: true }
+      postgresql.tup_fetched: { enabled: true }
+      postgresql.tup_inserted: { enabled: true }
+  postgresql/rag:
+    endpoint: paradedb:5432
+    username: demo
+    password: demo
+    databases: [rag]
+    collection_interval: 15s
+    tls:
+      insecure: true
+    metrics: *pg-extra
 
 processors:
   # 1. Skydda Collectorn själv – backa av innan minnet tar slut
@@ -56,6 +76,12 @@ processors:
     spike_limit_percentage: 20
 
   # 2. Berika: sätt miljö på allt som saknar det (upsert skriver över, insert inte)
+  resource/postgres:
+    attributes:
+      - { key: service.name, value: postgres, action: upsert }
+  resource/paradedb:
+    attributes:
+      - { key: service.name, value: paradedb, action: upsert }
   resource/env:
     attributes:
       - key: deployment.environment.name
@@ -69,6 +95,7 @@ processors:
       span:
         - 'attributes["url.path"] == "/health"'
         - 'attributes["http.route"] == "/health"'
+        - 'IsMatch(name, " http (receive|send)$")'   # ASGI-interna mini-spans från FastAPI
     logs:
       log_record:
         - 'severity_number > 0 and severity_number < SEVERITY_NUMBER_INFO'
@@ -134,8 +161,16 @@ service:
       processors: [memory_limiter, resource/env, filter/noise, transform/redact, tail_sampling, batch]
       exporters: [otlp_grpc/tempo]
     metrics:
-      receivers: [otlp, prometheus, postgresql]
+      receivers: [otlp, prometheus]
       processors: [memory_limiter, resource/env, batch]
+      exporters: [otlp_http/prometheus]
+    metrics/postgres:                    # samma exporter, men varje DB får sitt service.name
+      receivers: [postgresql/app]
+      processors: [memory_limiter, resource/postgres, resource/env, batch]
+      exporters: [otlp_http/prometheus]
+    metrics/paradedb:
+      receivers: [postgresql/rag]
+      processors: [memory_limiter, resource/paradedb, resource/env, batch]
       exporters: [otlp_http/prometheus]
     logs:
       receivers: [otlp]

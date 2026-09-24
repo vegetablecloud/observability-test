@@ -9,20 +9,28 @@ Dessa regler gäller allt arbete med Grafana-dashboards i repot. Målet är dash
 
 ## 1. Dashboards är kod, inte handskriven JSON
 
-- Dashboards **genereras** av ett Python-script (`build_dashboards.py`, bara standardbiblioteket).
-  JSON-filerna är en **byggprodukt**: de checkas in (Grafana provisionerar dem), men
-  **redigeras aldrig för hand**. Ändra i scriptet och kör det igen.
-- Scriptet har ett litet **bibliotek av byggstenar** överst: `panel`, `stat`, `timeseries`,
-  `table`, `logs`, `text`, `row`, `dashboard`, `color_override`, `thresholds`,
-  plus en funktion per datakälla som bygger en query (`prom(...)`, `loki(...)` osv.).
-  All mångordig JSON (fieldConfig, options, legend, tooltip) finns **en gång** i byggstenarna.
-  Varje dashboard är sedan en kort funktion `build_<namn>()` som bara innehåller
-  **titel, placering, query, enhet, beskrivning**.
-- Frågor som används på flera ställen (t.ex. p95-latens) ligger som **konstanter** överst.
-- Stil (färger, linjebredd, tooltip, legend) sätts centralt så att alla dashboards ser likadana ut.
+- Dashboards **genereras** av Python (bara standardbiblioteket). JSON-filerna är en **byggprodukt**:
+  de checkas in (Grafana provisionerar dem), men **redigeras aldrig för hand**.
+- Strukturen (se referensen `docs/reference/grafana/`):
+  ```
+  build_dashboards.py   bygger alla boards, validerar, skriver dashboards/*.json (--check i CI)
+  check_queries.py      kör VARJE query mot Grafana och listar paneler utan data
+  dashlib/theme.py      färgspråket – ett ställe att byta palett på
+  dashlib/panels.py     byggstenar: prom(), loki(), traceql(), stat(), timeseries(), table(), …
+  dashlib/board.py      Board: automatisk layout, variabler, länkar, annoteringar
+  dashlib/queries.py    queries som återkommer (RED per tjänst, status per komponent)
+  dashlib/validate.py   reglerna som bygget stoppar på
+  dashlib/diagram.py    klickbara arkitekturkartor (SVG i text-panel)
+  boards/bNN_namn.py    EN fil per dashboard med en build()-funktion
+  ```
+- All mångordig JSON (fieldConfig, options, legend, tooltip) finns **en gång** i `dashlib/`.
+  En board innehåller bara **titel, query, enhet, beskrivning och ordning**.
+- **Ingen x/y för hand.** `b.add(panel, w=6, h=4)` placerar till höger om föregående och
+  radbryter vid 24 kolumner. Ordningen i koden är ordningen på skärmen.
+- Datakällan räknas fram ur panelens queries (flera olika -> Mixed). Den anges aldrig för hand.
 - `uid` är **stabil** och ändras aldrig: bokmärken, länkar och alerts pekar på den.
   Vid migrering från en befintlig dashboard: **behåll dess `uid`**.
-- Panel-id:n sätts av en räknare, positionen (`gridPos`) av en `y`-markör som flyttas nedåt.
+- Utöka `dashlib/` när ett mönster behövs på fler än ett ställe, i stället för att klistra JSON i en board.
 
 ## 2. Varje dashboard svarar på en fråga
 
@@ -48,7 +56,10 @@ Dessa regler gäller allt arbete med Grafana-dashboards i repot. Målet är dash
   när den ser konstig ut ("Ska vara 0. Blir den gul: …").
 - Legend-texter är mänskliga (`"p95 · {{service_name}}"`), inte rå PromQL.
 - En `text`-panel får gärna förklara begrepp, ge tumregler, eller ge "nästa steg" med
-  länkar till nästa dashboard. En HTML-/SVG-panel kan rita **flödet** som dashboarden mäter.
+  länkar till nästa dashboard. En HTML-/SVG-panel (`dashlib/diagram.py`) kan rita **flödet**
+  som dashboarden mäter, med rutor som länkar till rätt dashboard.
+- En **startsida** med status per komponent (OK / STÖRD / NERE) och genvägar per roll.
+  Varje dashboard är byggd för en roll: testare, AI-utvecklare, drift eller plattform.
 
 ## 4. Färgspråk: neutralt, med en accent
 
@@ -103,7 +114,16 @@ Om Grafana MCP-servern är ansluten ska du **använda den istället för att gis
 
 ## 8. Innan du är klar
 
-1. Kör generatorn: `python3 <sökväg>/build_dashboards.py`. Inga fel, JSON skrivs.
-2. Granska `git diff` på JSON: stabila `uid`, inga försvunna paneler som inte var avsiktliga.
-3. Kontrollera att varje panel har titel, `description`, enhet, och att raderna summerar till 24.
-4. Beskriv i PR:en per dashboard: frågan den svarar på, vad som behölls, lades till eller togs bort, och varför.
+1. `python3 build_dashboards.py` – inga regelbrott (beskrivning, enhet, överlapp, datakällor, länkar).
+2. `python3 check_queries.py` mot Grafana (`GRAFANA_URL`, `GRAFANA_TOKEN`) – 0 FEL, och varje tom
+   panel har en förklaring (t.ex. "tom tills en container startas om").
+3. Granska `git diff` på JSON: stabila `uid`, inga försvunna paneler som inte var avsiktliga.
+4. Beskriv i PR:en per dashboard: rollen, frågan, vad som behölls/lades till/togs bort och varför.
+
+## 9. Kända fallgropar
+
+Se `docs/reference/HANDOFF.md` §5. Kort: Collectorns metrics saknar `_total`; postgresql-receiverns
+tabellnamn måste lyftas till labels; TraceQL-tabeller har visningsnamn (`Start time`, `Span ID`);
+node graph kräver riktiga fältnamn (`labelsToFields` + `valueLabel`, inte `organize`); Loki
+`count_over_time` behöver `or vector(0)`; en död tjänst ger tom panel, inte röd, om du inte
+använder `max_over_time(target_info[1h])`-mönstret.

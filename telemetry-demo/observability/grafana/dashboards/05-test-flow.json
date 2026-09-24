@@ -1,0 +1,711 @@
+{
+  "uid": "test-flow",
+  "title": "05 · Testflöde A→Ö",
+  "description": "Vad hände med mina anrop, steg för steg, genom hela stacken?",
+  "tags": [
+    "telemetry-demo",
+    "test"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "version": 1,
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "templating": {
+    "list": [
+      {
+        "type": "textbox",
+        "name": "test_run",
+        "label": "test-run-id",
+        "query": "loadgen",
+        "current": {
+          "text": "loadgen",
+          "value": "loadgen"
+        },
+        "hide": 0,
+        "options": []
+      },
+      {
+        "type": "textbox",
+        "name": "trace_id",
+        "label": "trace_id",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
+      "type": "dashboards",
+      "tags": [
+        "telemetry-demo"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "\n<div style=\"font-family:Inter,system-ui,sans-serif;display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:14px;padding:4px\">\n  <div>\n    <div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.12em;color:#FFB400\">TESTFLÖDE A → Ö</div>\n    <div style=\"font-size:26px;font-weight:600;color:#fff;margin-top:4px;letter-spacing:-.02em\">Vad hände med mina anrop?</div>\n    <div style=\"font-size:14px;color:#D6D6D6;margin-top:6px\">Varje anrop är en trace genom hela stacken. Här ser du alla steg, i ordning, och exakt var något gick fel.</div>\n  </div>\n  <div style=\"border:1px solid #262626;background:#0D0D0D;padding:12px 14px\">\n    <div style=\"font-family:'Roboto Mono',monospace;font-size:12px;color:#707070\">1 · KÖR</div>\n    <div style=\"color:#fff;margin-top:6px;font-size:14px\">Märk dina anrop med headern <code>x-test-run-id</code>, eller kör</div>\n    <div style=\"font-family:'Roboto Mono',monospace;color:#FFB400;margin-top:6px;font-size:13px\">./scripts/e2e-test.sh</div>\n  </div>\n  <div style=\"border:1px solid #262626;background:#0D0D0D;padding:12px 14px\">\n    <div style=\"font-family:'Roboto Mono',monospace;font-size:12px;color:#707070\">2 · VÄLJ</div>\n    <div style=\"color:#fff;margin-top:6px;font-size:14px\">Skriv test-run-id högst upp (skriptet skriver ut länken). <code>loadgen</code> = den simulerade trafiken.</div>\n  </div>\n  <div style=\"border:1px solid #262626;background:#0D0D0D;padding:12px 14px\">\n    <div style=\"font-family:'Roboto Mono',monospace;font-size:12px;color:#707070\">3 · FÖLJ</div>\n    <div style=\"color:#fff;margin-top:6px;font-size:14px\">Kopiera ett trace-id till <code>trace_id</code> och fäll ut ③ – eller klicka på trace-id:t för Explore.</div>\n  </div>\n</div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 5
+      }
+    },
+    {
+      "id": 2,
+      "type": "row",
+      "title": "② Testkörningen · $test_run",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Alla anrop i testkörningen",
+      "description": "Ett anrop per rad, senaste först. Status ≥ 400 och tid över 3 s är gula. Kopiera trace_id till variabeln högst upp för att följa anropet A→Ö i ③, eller klicka på Span för att öppna det i Explore.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{ resource.service.name = \"frontend\" && kind = server && span.test.run.id = \"$test_run\" } | select(span.http.response.status_code, span.http.route)",
+          "limit": 100,
+          "tableType": "spans",
+          "spss": 3,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "range",
+                    "options": {
+                      "from": 200,
+                      "to": 399,
+                      "result": {
+                        "color": "#FFFFFF",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "range",
+                    "options": {
+                      "from": 400,
+                      "to": 599,
+                      "result": {
+                        "color": "#FFB400",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tid"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "#FFFFFF"
+                    },
+                    {
+                      "value": 3000000000.0,
+                      "color": "#FFB400"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "http.response.status_code": "Status",
+              "http.route": "Route"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true,
+              "Name": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "http.response.status_code": 1,
+              "Duration": 2,
+              "http.route": 3,
+              "traceIdHidden": 4,
+              "Span ID": 5
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Start",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "id": 3,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 13,
+        "h": 12
+      }
+    },
+    {
+      "type": "table",
+      "title": "Fel i testkörningen · exakt var",
+      "description": "Varje span med status ERROR under en rot-span i testkörningen: vilken tjänst, vilket steg, vilken feltyp, och för agenten vilken nod och vilket verktyg. Tomt = inga fel.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{ span.test.run.id = \"$test_run\" } >> { status = error } | select(resource.service.name, span.error.type, span.langgraph.node, span.gen_ai.tool.name, span.http.response.status_code)",
+          "limit": 100,
+          "tableType": "spans",
+          "spss": 10,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tid"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Feltyp"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "service.name": "Tjänst",
+              "error.type": "Feltyp",
+              "langgraph.node": "Nod",
+              "gen_ai.tool.name": "Verktyg",
+              "http.response.status_code": "HTTP"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "service.name": 1,
+              "Name": 2,
+              "error.type": 3,
+              "langgraph.node": 4,
+              "gen_ai.tool.name": 5,
+              "http.response.status_code": 6,
+              "Duration": 7,
+              "traceIdHidden": 8,
+              "Span ID": 9
+            }
+          }
+        }
+      ],
+      "id": 4,
+      "gridPos": {
+        "x": 13,
+        "y": 6,
+        "w": 11,
+        "h": 12
+      }
+    },
+    {
+      "id": 5,
+      "type": "row",
+      "title": "③ Ett anrop A→Ö · $trace_id",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Stegen i tidsordning",
+      "description": "Varje span i anropet, i den ordning de startade: frontend → backend → ai-chat (noderna, LLM, verktygen) → rag-api → databaser. Stapeln visar hur lång tid steget tog. Gult = steget felade.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "{ trace:id = \"$trace_id\" && name != \"\" } | select(resource.service.name, span.langgraph.node, span.gen_ai.tool.name, status, span.error.type)",
+          "limit": 1,
+          "tableType": "spans",
+          "spss": 100,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tid"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "error": {
+                        "color": "#FFB400",
+                        "index": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Feltyp"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "service.name": "Tjänst",
+              "langgraph.node": "Nod",
+              "gen_ai.tool.name": "Verktyg",
+              "status": "Status",
+              "error.type": "Feltyp"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true,
+              "traceIdHidden": true
+            },
+            "indexByName": {
+              "Start time": 0,
+              "service.name": 1,
+              "Name": 2,
+              "Duration": 3,
+              "status": 4,
+              "error.type": 5,
+              "langgraph.node": 6,
+              "gen_ai.tool.name": 7,
+              "Span ID": 8
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Start",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ],
+      "id": 6,
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 14
+      }
+    },
+    {
+      "type": "traces",
+      "title": "Waterfall · $trace_id",
+      "description": "Samma steg som tabellen, som waterfall. Klicka på en span för alla attribut och 'Logs for this span'.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "refId": "A",
+          "queryType": "traceql",
+          "query": "$trace_id",
+          "limit": 20,
+          "filters": []
+        }
+      ],
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "options": {},
+      "id": 7,
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 24,
+        "h": 16
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Loggarna för anropet · i tidsordning, alla tjänster",
+      "description": "Berättelsen i text: request_started (frontend) → node_done … tool_done … (ai-chat) → search_done (rag-api) → ask_completed (backend) → response_sent.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "A",
+          "expr": "{deployment_environment_name=\"demo\"} | trace_id=\"$trace_id\"",
+          "legendFormat": "",
+          "editorMode": "code",
+          "queryType": "range",
+          "direction": "forward"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Ascending",
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": true
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 49,
+        "w": 24,
+        "h": 12
+      }
+    }
+  ]
+}

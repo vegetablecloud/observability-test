@@ -52,13 +52,17 @@ app.MapGet("/config", () => Results.Ok(new { grafanaUrl }));
 
 app.MapPost("/ask", async (HttpRequest request, IHttpClientFactory http, ILogger<Program> log) =>
 {
+    // Testare (och loadgen) märker sina anrop med x-test-run-id. Det blir ett attribut på
+    // root-spanen, så dashboarden "Testflöde A→Ö" kan lista exakt en testkörnings traces.
+    var testRun = request.Headers["x-test-run-id"].FirstOrDefault() ?? "manual";
+    Activity.Current?.SetTag("test.run.id", testRun);
     using var body = new StreamContent(request.Body);
     body.Headers.ContentType = new("application/json");
-    log.LogInformation("request_started route=/ask");
+    log.LogInformation("request_started route=/ask test_run={TestRun}", testRun);
     var sw = Stopwatch.StartNew();
     using var res = await http.CreateClient("backend").PostAsync("/api/ask", body);
     var content = await res.Content.ReadAsStringAsync();
-    if (!res.IsSuccessStatusCode) log.LogWarning("backend_error status={Status}", (int)res.StatusCode);
+    if (!res.IsSuccessStatusCode) log.LogWarning("backend_error status={Status} test_run={TestRun}", (int)res.StatusCode, testRun);
     log.LogInformation("response_sent status={Status} duration_ms={Ms}", (int)res.StatusCode, sw.ElapsedMilliseconds);
     return Results.Content(content, "application/json", statusCode: (int)res.StatusCode);
 });
@@ -66,12 +70,20 @@ app.MapPost("/ask", async (HttpRequest request, IHttpClientFactory http, ILogger
 app.MapGet("/api/history", async (IHttpClientFactory http) =>
     Results.Content(await http.CreateClient("backend").GetStringAsync("/api/history"), "application/json"));
 
-// Endast för demo: slå på/av incident i LLM-mocken direkt från UI:t.
-app.MapPost("/demo/chaos/{mode}", async (string mode, IHttpClientFactory http) =>
+// Endast för demo: sätt ett chaos-läge i hela stacken. Varje tjänst reagerar på "sina" lägen
+// och går till normal för alla andra, så att bara ett fel är aktivt åt gången.
+string[] chaosTargets = (app.Configuration["CHAOS_TARGETS"]
+    ?? "http://vllm-gemma:8000,http://vllm-embed:8000,http://rag-api:8080,http://algorithm:8080").Split(',');
+app.MapPost("/demo/chaos/{mode}", async (string mode, IHttpClientFactory http, ILogger<Program> log) =>
 {
-    var llm = app.Configuration["LLM_ADMIN_URL"] ?? "http://llm:8000";
-    using var res = await http.CreateClient().PostAsync($"{llm}/chaos/{mode}", null);
-    return Results.Content(await res.Content.ReadAsStringAsync(), "application/json", statusCode: (int)res.StatusCode);
+    var client = http.CreateClient();
+    var results = await Task.WhenAll(chaosTargets.Select(async t =>
+    {
+        try { using var r = await client.PostAsync($"{t}/chaos/{mode}", null); return $"{t}={(int)r.StatusCode}"; }
+        catch (Exception e) { return $"{t}={e.GetType().Name}"; }
+    }));
+    log.LogWarning("chaos_mode_set mode={Mode} targets={Targets}", mode, string.Join(" ", results));
+    return Results.Ok(new { mode, targets = results });
 });
 
 app.MapGet("/health", () => Results.Ok(new { ok = true }));

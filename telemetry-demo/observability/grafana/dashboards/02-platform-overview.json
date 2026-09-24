@@ -1,9 +1,10 @@
 {
   "uid": "platform-overview",
   "title": "02 · Plattform · Översikt",
-  "description": "Metrics → traces → logs på samma tidsaxel, ner till GPU:n",
+  "description": "Är något fel, var, och vad exakt? Metrics → traces → logs på samma tidsaxel",
   "tags": [
-    "telemetry-demo"
+    "telemetry-demo",
+    "plattform"
   ],
   "editable": true,
   "graphTooltip": 1,
@@ -19,31 +20,47 @@
   "fiscalYearStartMonth": 0,
   "liveNow": false,
   "templating": {
+    "list": []
+  },
+  "annotations": {
     "list": [
       {
-        "type": "textbox",
-        "name": "trace_id",
-        "label": "trace_id",
-        "query": "",
-        "current": {
-          "value": ""
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
         },
-        "hide": 0,
-        "options": []
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
       }
     ]
   },
-  "annotations": {
-    "list": []
-  },
   "links": [
     {
-      "title": "Telemetry-demo",
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
       "type": "dashboards",
       "tags": [
         "telemetry-demo"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true,
       "targetBlank": false,
@@ -52,20 +69,9 @@
   ],
   "panels": [
     {
-      "id": 28,
       "type": "stat",
-      "title": "Requests/s",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": "Frågor / s",
+      "description": "Användarnas frågor till frontend /ask.",
       "targets": [
         {
           "datasource": {
@@ -77,9 +83,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -95,6 +106,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 1
         },
         "overrides": []
@@ -114,23 +126,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 29,
-      "type": "stat",
-      "title": "Felkvot",
-      "description": "",
+      },
+      "id": 1,
       "gridPos": {
-        "x": 4,
+        "x": 0,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Felkvot",
+      "description": "Andel frågor som gav 5xx, senaste 5 min. Gul över 2 %.",
       "targets": [
         {
           "datasource": {
@@ -138,13 +146,18 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\", http_response_status_code=~\"5..\"}[1m])) / sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\"}[1m]))",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\", http_response_status_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\"}[5m]))",
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
@@ -164,6 +177,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 1
         },
         "overrides": []
@@ -183,23 +197,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 30,
-      "type": "stat",
-      "title": "p95 · användarens väntetid",
-      "description": "",
+      },
+      "id": 2,
       "gridPos": {
-        "x": 8,
+        "x": 4,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "p95 · användarens väntetid",
+      "description": "Tiden användaren väntar på svar (frontend /ask). Gul över 3 s.",
       "targets": [
         {
           "datasource": {
@@ -207,13 +217,18 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frontend\", http_route=\"/ask\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frontend\", http_route=\"/ask\"}[5m])))",
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
@@ -228,12 +243,12 @@
                 "color": "#FFFFFF"
               },
               {
-                "value": 2,
+                "value": 3,
                 "color": "#FFB400"
               }
             ]
           },
-          "decimals": 2
+          "links": []
         },
         "overrides": []
       },
@@ -252,23 +267,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 31,
-      "type": "stat",
-      "title": "LLM-omförsök/min",
-      "description": "",
+      },
+      "id": 3,
       "gridPos": {
-        "x": 12,
+        "x": 8,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "LLM-omförsök / min",
+      "description": "LLM-anrop från agenten som slutade i fel (timeout, 500). Över 0: titta på 04 · LLM & RAG.",
       "targets": [
         {
           "datasource": {
@@ -276,13 +287,18 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "sum(rate(gen_ai_client_retries_total[1m])) * 60 or vector(0)",
+          "expr": "sum(rate(gen_ai_client_operation_duration_seconds_count{service_name=\"ai-chat\", error_type!=\"\"}[1m])) * 60 or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -302,6 +318,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -321,23 +338,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 32,
-      "type": "stat",
-      "title": "GPU",
-      "description": "",
+      },
+      "id": 4,
       "gridPos": {
-        "x": 16,
+        "x": 12,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "GPU",
+      "description": "GPU-utnyttjande på DGX Spark.",
       "targets": [
         {
           "datasource": {
@@ -349,9 +362,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -371,6 +389,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -390,23 +409,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 33,
-      "type": "stat",
-      "title": "Unified memory",
-      "description": "av 128 GB (DGX Spark delar minne mellan CPU och GPU)",
+      },
+      "id": 5,
       "gridPos": {
-        "x": 20,
+        "x": 16,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Unified memory",
+      "description": "Använt av 128 GB (DGX Spark delar minne mellan CPU och GPU).",
       "targets": [
         {
           "datasource": {
@@ -418,9 +433,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
@@ -440,6 +460,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -459,23 +480,32 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 34,
-      "type": "timeseries",
-      "title": "Request p95 · per tjänst",
-      "description": "METRICS svarar på: är något fel? ◆ = exemplar – klicka för att öppna exakt den trace som gav värdet.",
+      "id": 7,
+      "type": "row",
+      "title": "① RED per tjänst · rate, errors, duration",
+      "collapsed": false,
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 12,
-        "h": 9
+        "w": 24,
+        "h": 1
       },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests / s per tjänst",
+      "description": "Server-spans per tjänst (Tempo span-metrics). Alla tjänster bör följa samma kurva som frontend.",
       "targets": [
         {
           "datasource": {
@@ -483,48 +513,43 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{http_route!=\"/health\"}[1m])))",
-          "legendFormat": "{{service_name}}",
+          "expr": "sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[1m]))",
+          "legendFormat": "{{service}}",
           "range": true,
           "instant": false,
-          "exemplar": true
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
-          "color": {
-            "mode": "palette-classic"
-          },
+          "unit": "short",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
-              "mode": "dashed"
-            }
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
           },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 2,
-                "color": "#FFB400"
-              }
-            ]
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -553,12 +578,8 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#FFB400"
+                  "fixedColor": "#D6D6D6"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
               }
             ]
           },
@@ -572,7 +593,26 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
                 }
               }
             ]
@@ -605,14 +645,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm-server"
+              "options": "vllm-gemma"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#FFFFFF"
                 }
               }
             ]
@@ -620,29 +660,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm"
+              "options": "vllm-embed"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#707070"
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
               }
             ]
@@ -658,6 +693,21 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
                 }
               }
             ]
@@ -698,29 +748,391 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 35,
-      "type": "timeseries",
-      "title": "DGX Spark · GPU & minne",
-      "description": "Samma tidsaxel som p95: slår GPU:n i taket minuten innan latensen stiger?",
-      "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 12,
-        "h": 9
-      },
+      "type": "bargauge",
+      "title": "Felkvot per tjänst · 2 min",
+      "description": "Andel server-spans med status ERROR. Gul över 2 %. Tjänsten längst upp med gult är oftast där felet börjar.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "(sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[2m])) or sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m])) * 0) / sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m]))",
+          "legendFormat": "{{service}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#707070"
+              },
+              {
+                "value": 0.02,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "max": 0.2,
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 36,
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 8,
+        "y": 5,
+        "w": 4,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Request p95 · per tjänst",
+      "description": "METRICS svarar på: är något fel? ◆ = exemplar – klicka för att öppna exakt den trace som gav värdet.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{http_route!=\"/health\", service_name=~\"frontend|backend|ai-chat|rag-api|algorithm\"}[1m])))",
+          "legendFormat": "{{service_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": true,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 3,
+                "color": "#FFB400"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "frontend"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "backend"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-chat"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "algorithm"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vllm-gemma"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vllm-embed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "postgres"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "user"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "partner-service"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "② Orsak bredvid verkan · samma tidsaxel",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "DGX Spark · GPU, minne och KV-cache",
+      "description": "Slår GPU:n i taket minuten innan latensen i ① stiger? Då är det modellen, inte koden.",
       "targets": [
         {
           "datasource": {
@@ -732,7 +1144,8 @@
           "legendFormat": "GPU",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -744,7 +1157,8 @@
           "legendFormat": "unified mem",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -752,35 +1166,43 @@
             "uid": "prometheus"
           },
           "refId": "C",
-          "expr": "100 * avg(vllm:kv_cache_usage_perc)",
-          "legendFormat": "vLLM KV-cache",
+          "expr": "100 * avg({\"vllm:kv_cache_usage_perc\", model_name=\"gemma\"})",
+          "legendFormat": "gemma KV-cache",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           },
           "max": 100
         },
@@ -832,7 +1254,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "vLLM KV-cache"
+              "options": "gemma KV-cache"
             },
             "properties": [
               {
@@ -850,29 +1272,209 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
       }
     },
     {
-      "id": 36,
-      "type": "nodeGraph",
-      "title": "Service graph · Tempo (från traces)",
-      "description": "Byggs automatiskt av Tempos metrics-generator ur spans. llm, qdrant och postgres är 'virtuella noder' – de skickar inga egna traces.",
+      "type": "timeseries",
+      "title": "Modellernas köer",
+      "description": "Requests som köar i vLLM. Växande kö = modellen hinner inte med, oavsett hur snabb resten av stacken är.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (model_name) (avg_over_time({\"vllm:num_requests_waiting\"}[1m]))",
+          "legendFormat": "väntar · {{model_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum by (model_name) (avg_over_time({\"vllm:num_requests_running\"}[1m]))",
+          "legendFormat": "körs · {{model_name}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "väntar · gemma"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "körs · gemma"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "väntar · harrier"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "körs · harrier"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "③ Var händer det? · traces",
+      "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 13,
-        "w": 12,
-        "h": 11
+        "y": 22,
+        "w": 24,
+        "h": 1
       },
-      "datasource": {
-        "type": "tempo",
-        "uid": "tempo"
-      },
+      "panels": []
+    },
+    {
+      "type": "nodeGraph",
+      "title": "Service graph · ur traces",
+      "description": "Byggs automatiskt av Tempos metrics-generator ur spans. vLLM och databaserna är 'virtuella noder': de skickar inga egna traces, men syns ändå via anroparnas client-spans.",
       "targets": [
         {
           "datasource": {
@@ -881,26 +1483,31 @@
           },
           "refId": "A",
           "queryType": "serviceMap",
-          "serviceMapIncludeNamespace": false
+          "serviceMapIncludeNamespace": false,
+          "filters": []
         }
       ],
-      "options": {}
-    },
-    {
-      "id": 37,
-      "type": "table",
-      "title": "Långsamma requests (> 1 s) · klicka för trace",
-      "description": "TRACES svarar på: var händer det? Öppna en trace och se vilken span som tar tiden.",
-      "gridPos": {
-        "x": 12,
-        "y": 13,
-        "w": 12,
-        "h": 11
-      },
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
+      "options": {
+        "nodes": {},
+        "edges": {}
+      },
+      "transformations": [],
+      "id": 15,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 12
+      }
+    },
+    {
+      "type": "table",
+      "title": "Långsamma frågor (> 2 s) · klicka för trace",
+      "description": "TRACES svarar på: var händer det? Öppna en trace och se vilken span som tar tiden.",
       "targets": [
         {
           "datasource": {
@@ -909,39 +1516,89 @@
           },
           "refId": "A",
           "queryType": "traceql",
+          "query": "{ resource.service.name = \"frontend\" && kind = server && duration > 2s } | select(span.http.response.status_code)",
           "limit": 20,
-          "tableType": "traces",
-          "query": "{ resource.service.name = \"frontend\" && kind = server && duration > 1s }"
+          "tableType": "spans",
+          "spss": 3,
+          "filters": []
         }
       ],
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
       },
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
           "custom": {
-            "align": "auto"
-          }
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          },
+          "links": []
         },
         "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Start time": "Start",
+              "Name": "Steg",
+              "Duration": "Tid",
+              "Span ID": "Span",
+              "traceIdHidden": "trace_id",
+              "http.response.status_code": "Status"
+            },
+            "excludeByName": {
+              "Trace Service": true,
+              "Trace Name": true,
+              "kind": true,
+              "Name": true,
+              "traceIdHidden": true
+            }
+          }
+        }
+      ],
+      "id": 16,
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 12
       }
     },
     {
-      "id": 38,
+      "id": 17,
+      "type": "row",
+      "title": "④ Vad exakt hände? · logs",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
       "type": "logs",
       "title": "WARN & ERROR · alla tjänster",
       "description": "LOGS svarar på: vad exakt hände? Expandera en rad → 'Öppna trace' via trace_id.",
-      "gridPos": {
-        "x": 0,
-        "y": 24,
-        "w": 12,
-        "h": 10
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
       "targets": [
         {
           "datasource": {
@@ -951,48 +1608,15 @@
           "refId": "A",
           "expr": "{deployment_environment_name=\"demo\"} | detected_level=~\"warn|warning|error\"",
           "legendFormat": "",
-          "queryType": "range"
+          "editorMode": "code",
+          "queryType": "range",
+          "direction": "backward"
         }
       ],
-      "options": {
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": false,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "none",
-        "enableInfiniteScrolling": true
-      }
-    },
-    {
-      "id": 39,
-      "type": "logs",
-      "title": "Loggar för trace_id = $trace_id",
-      "description": "Klistra in ett trace_id i variabeln högst upp (eller klicka 'Logs for this span' i en trace).",
-      "gridPos": {
-        "x": 12,
-        "y": 24,
-        "w": 12,
-        "h": 10
-      },
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "refId": "A",
-          "expr": "{deployment_environment_name=\"demo\"} | trace_id!=\"\" | trace_id=\"$trace_id\"",
-          "legendFormat": "",
-          "queryType": "range"
-        }
-      ],
       "options": {
         "showTime": true,
         "showLabels": false,
@@ -1003,6 +1627,13 @@
         "sortOrder": "Descending",
         "dedupStrategy": "none",
         "enableInfiniteScrolling": true
+      },
+      "id": 18,
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 10
       }
     }
   ]

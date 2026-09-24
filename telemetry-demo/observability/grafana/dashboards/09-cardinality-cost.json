@@ -1,9 +1,10 @@
 {
   "uid": "cardinality-cost",
-  "title": "05 · Cardinality & kostnad",
-  "description": "Mer telemetri är inte alltid bättre: serier, bytes och spans per tjänst",
+  "title": "09 · Cardinality & kostnad",
+  "description": "Vad kostar vår telemetri, och vem står för det?",
   "tags": [
-    "telemetry-demo"
+    "telemetry-demo",
+    "plattform"
   ],
   "editable": true,
   "graphTooltip": 1,
@@ -22,16 +23,44 @@
     "list": []
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
   },
   "links": [
     {
-      "title": "Telemetry-demo",
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
       "type": "dashboards",
       "tags": [
         "telemetry-demo"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true,
       "targetBlank": false,
@@ -40,20 +69,9 @@
   ],
   "panels": [
     {
-      "id": 76,
       "type": "stat",
       "title": "Aktiva serier",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Tidsserier i Prometheus minne. Den viktigaste kostnadssiffran för metrics.",
       "targets": [
         {
           "datasource": {
@@ -65,9 +83,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -86,7 +109,8 @@
                 "color": "#FFB400"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -105,23 +129,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 77,
-      "type": "stat",
-      "title": "app_ask_requests_total · serier",
-      "description": "Sätt BAD_CARDINALITY=true i .env och starta om backend. Varje user_id × request_id blir en ny serie.",
+      },
+      "id": 1,
       "gridPos": {
-        "x": 6,
+        "x": 0,
         "y": 0,
         "w": 6,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "app_ask_requests_total · serier",
+      "description": "Sätt BAD_CARDINALITY=true i .env och starta om backend. Varje user_id × request_id blir en ny serie.",
       "targets": [
         {
           "datasource": {
@@ -133,9 +153,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -154,7 +179,8 @@
                 "color": "#FFB400"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -173,23 +199,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 78,
-      "type": "stat",
-      "title": "Loki · bytes/s",
-      "description": "",
+      },
+      "id": 2,
       "gridPos": {
-        "x": 12,
+        "x": 6,
         "y": 0,
         "w": 6,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Loki · bytes/s",
+      "description": "Loggvolym in. Loggar kostar per byte.",
       "targets": [
         {
           "datasource": {
@@ -201,9 +223,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps",
@@ -218,7 +245,8 @@
                 "color": "#FFFFFF"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -237,23 +265,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 79,
-      "type": "stat",
-      "title": "Tempo · bytes/s",
-      "description": "",
+      },
+      "id": 3,
       "gridPos": {
-        "x": 18,
+        "x": 12,
         "y": 0,
         "w": 6,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Tempo · bytes/s",
+      "description": "Trace-volym in, efter tail sampling. Innehåll på spans (prompter, svar) syns här.",
       "targets": [
         {
           "datasource": {
@@ -265,9 +289,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps",
@@ -282,7 +311,8 @@
                 "color": "#FFFFFF"
               }
             ]
-          }
+          },
+          "links": []
         },
         "overrides": []
       },
@@ -301,23 +331,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
       }
     },
     {
-      "id": 80,
       "type": "timeseries",
       "title": "app_ask_requests_total · antal serier över tid",
       "description": "Bra labels: app_intent, outcome (få, stabila värden). Dåliga: user_id, request_id, filename.",
-      "gridPos": {
-        "x": 0,
-        "y": 4,
-        "w": 12,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "targets": [
         {
           "datasource": {
@@ -329,32 +355,40 @@
           "legendFormat": "serier",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "#FFB400"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 15,
             "gradientMode": "opacity",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB400"
           }
         },
         "overrides": []
@@ -363,48 +397,47 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
       }
     },
     {
-      "id": 81,
       "type": "text",
       "title": "Tumregler",
       "description": "",
+      "targets": [],
+      "options": {
+        "mode": "markdown",
+        "content": "\n| Hör hemma i… | Exempel |\n|---|---|\n| **Metric-labels** (få, stabila) | `service_name`, `http_route`, `langgraph_node`, `gen_ai_tool_name`, `outcome` |\n| **Trace-attribut** (unika id:n) | `user.id`, `gen_ai.conversation.id`, `test.run.id`, `gen_ai.tool.call.arguments` |\n| **Loggar** (detaljer) | felmeddelanden, `attempt=2 reason=timeout`, `node_done node=agent step=2` |\n\nUnika värden som label ger en ny tidsserie per värde → minne, disk och långsamma frågor i Prometheus.\n",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": false,
+      "id": 6,
       "gridPos": {
         "x": 12,
         "y": 4,
         "w": 12,
         "h": 8
-      },
-      "datasource": null,
-      "targets": [],
-      "options": {
-        "mode": "markdown",
-        "content": "\n| Hör hemma i… | Exempel |\n|---|---|\n| **Metric-labels** (få, stabila) | `service_name`, `http_route`, `http_response_status_code`, `app_intent` |\n| **Trace-attribut** (unika id:n) | `user.id`, `request.id`, `gen_ai.usage.*`, `rag.top_k` |\n| **Loggar** (detaljer) | felmeddelanden, `attempt=2 reason=timeout` |\n\nUnika värden som label ger en ny tidsserie per värde → minne, disk och långsamma frågor i Prometheus.\n"
-      },
-      "transparent": false
+      }
     },
     {
-      "id": 82,
       "type": "table",
       "title": "Topp 15 metrics efter antal serier",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 12,
-        "w": 8,
-        "h": 11
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Vilka metrics står för flest serier? Börja optimera överst.",
       "targets": [
         {
           "datasource": {
@@ -417,9 +450,14 @@
           "range": false,
           "instant": true,
           "exemplar": false,
+          "editorMode": "code",
           "format": "table"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -427,16 +465,35 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            }
-          }
+            },
+            "filterable": false
+          },
+          "links": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Serier"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "show": false
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
         },
         "sortBy": [
           {
@@ -449,32 +506,28 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true
-            },
             "renameByName": {
               "__name__": "Metric",
               "Value": "Serier"
+            },
+            "excludeByName": {
+              "Time": true
             }
           }
         }
-      ]
-    },
-    {
-      "id": 83,
-      "type": "table",
-      "title": "Serier per tjänst (service_name)",
-      "description": "",
+      ],
+      "id": 7,
       "gridPos": {
-        "x": 8,
+        "x": 0,
         "y": 12,
         "w": 8,
         "h": 11
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "table",
+      "title": "Serier per tjänst",
+      "description": "Vilken tjänst skickar flest serier?",
       "targets": [
         {
           "datasource": {
@@ -487,9 +540,14 @@
           "range": false,
           "instant": true,
           "exemplar": false,
+          "editorMode": "code",
           "format": "table"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -497,16 +555,35 @@
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            }
-          }
+            },
+            "filterable": false
+          },
+          "links": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Serier"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
         "cellHeight": "sm",
         "footer": {
-          "show": false
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
         },
         "sortBy": [
           {
@@ -519,32 +596,28 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true
-            },
             "renameByName": {
               "service_name": "Tjänst",
               "Value": "Serier"
+            },
+            "excludeByName": {
+              "Time": true
             }
           }
         }
-      ]
-    },
-    {
-      "id": 84,
-      "type": "timeseries",
-      "title": "Loggvolym per tjänst",
-      "description": "",
+      ],
+      "id": 8,
       "gridPos": {
-        "x": 16,
+        "x": 8,
         "y": 12,
         "w": 8,
         "h": 11
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Loggvolym per tjänst",
+      "description": "Bytes per sekund loggar per tjänst.",
       "targets": [
         {
           "datasource": {
@@ -554,31 +627,39 @@
           "refId": "A",
           "expr": "sum by (service_name) (bytes_rate({service_name=~\".+\"}[1m]))",
           "legendFormat": "{{service_name}}",
+          "editorMode": "code",
           "queryType": "range"
         }
       ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 40,
             "gradientMode": "opacity",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "normal",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -607,12 +688,8 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#FFB400"
+                  "fixedColor": "#D6D6D6"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
               }
             ]
           },
@@ -626,7 +703,26 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
                 }
               }
             ]
@@ -659,14 +755,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm-server"
+              "options": "vllm-gemma"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#FFFFFF"
                 }
               }
             ]
@@ -674,29 +770,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm"
+              "options": "vllm-embed"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#707070"
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
               }
             ]
@@ -712,6 +803,21 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
                 }
               }
             ]
@@ -752,29 +858,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 16,
+        "y": 12,
+        "w": 8,
+        "h": 11
       }
     },
     {
-      "id": 85,
       "type": "timeseries",
-      "title": "Spans/s per tjänst (Tempo span-metrics)",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 23,
-        "w": 24,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": "Spans / s per tjänst · Tempo span-metrics",
+      "description": "ai-chat skickar flest spans: en per nod, LLM-anrop och verktyg. Värt det – men sampla resten om volymen blir för stor.",
       "targets": [
         {
           "datasource": {
@@ -786,31 +889,39 @@
           "legendFormat": "{{service}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 40,
             "gradientMode": "opacity",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "normal",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -839,12 +950,8 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#FFB400"
+                  "fixedColor": "#D6D6D6"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
               }
             ]
           },
@@ -858,7 +965,26 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
                 }
               }
             ]
@@ -891,14 +1017,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm-server"
+              "options": "vllm-gemma"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#FFFFFF"
                 }
               }
             ]
@@ -906,29 +1032,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm"
+              "options": "vllm-embed"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#707070"
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
               }
             ]
@@ -944,6 +1065,21 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
                 }
               }
             ]
@@ -984,12 +1120,20 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 8
       }
     }
   ]

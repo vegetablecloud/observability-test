@@ -1,5 +1,6 @@
-// backend – C# ASP.NET Core API.
-// Orkestrerar en fråga: algorithm (Python) -> ai-chat (Python/RAG) -> Postgres.
+// backend – C# ASP.NET Core API med affärslogiken.
+// En fråga: kvotkontroll (Postgres) -> ai-chat (LangGraph-agenten) -> spara konversationen (Postgres).
+// Agenten anropar i sin tur rag-api och algorithm som verktyg.
 //
 // Det här är ALLT som krävs för att en .NET-tjänst ska bli observerbar:
 //   1. AddOpenTelemetry() med tracing + metrics + logs
@@ -39,16 +40,16 @@ builder.Services.AddOpenTelemetry()
     .UseOtlpExporter();                         // PUSH till Collectorn (OTLP/gRPC 4317)
 
 // ---- Beroenden ------------------------------------------------------------
-builder.Services.AddHttpClient("algorithm", c => c.BaseAddress = new Uri(builder.Configuration["ALGORITHM_URL"] ?? "http://algorithm:8080"));
 builder.Services.AddHttpClient("ai-chat", c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["AI_CHAT_URL"] ?? "http://ai-chat:8080");
-    c.Timeout = TimeSpan.FromSeconds(15);
+    c.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddSingleton(NpgsqlDataSource.Create(
     builder.Configuration["POSTGRES_CONNECTION"] ?? "Host=postgres;Username=demo;Password=demo;Database=demo"));
 
 var app = builder.Build();
+const int QuotaPerHour = 500;
 var badCardinality = string.Equals(app.Configuration["BAD_CARDINALITY"], "true", StringComparison.OrdinalIgnoreCase);
 
 _ = Task.Run(() => Db.EnsureSchemaAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), app.Logger));
@@ -66,31 +67,43 @@ app.MapPost("/api/ask", async (AskRequest req, IHttpClientFactory http, NpgsqlDa
     log.LogInformation("ask_received user={UserEmail} chars={Chars}", req.UserEmail, req.Question.Length);
 
     string outcome = "ok", intent = "unknown";
+    var conversationId = Guid.NewGuid().ToString("N")[..16];
+    span?.SetTag("gen_ai.conversation.id", conversationId);
     try
     {
-        // 1) Python-algoritmen poängsätter frågan
-        using var scoreRes = await http.CreateClient("algorithm").PostAsJsonAsync("/score", new { question = req.Question });
-        if (!scoreRes.IsSuccessStatusCode)
+        // 1) Affärsregel: max antal frågor per användare och timme – egen span runt ett affärssteg
+        using (var quota = Telemetry.Source.StartActivity("check quota"))
         {
-            outcome = "algorithm_error";
-            log.LogError("algorithm_failed status={Status}", (int)scoreRes.StatusCode);
-            return Results.Problem("algorithm failed", statusCode: 502);
+            await using var cmd = db.CreateCommand(
+                "SELECT count(*) FROM conversations WHERE user_id = $1 AND created_at > now() - interval '1 hour'");
+            cmd.Parameters.AddWithValue(req.UserId ?? "anonymous");
+            var used = (long)(await cmd.ExecuteScalarAsync() ?? 0L);
+            quota?.SetTag("app.quota.used", used);
+            quota?.SetTag("app.quota.limit", QuotaPerHour);
+            if (used >= QuotaPerHour)
+            {
+                outcome = "quota_exceeded";
+                quota?.SetStatus(ActivityStatusCode.Error, "quota exceeded");
+                log.LogWarning("quota_exceeded used={Used} limit={Limit}", used, QuotaPerHour);
+                return Results.Problem("quota exceeded", statusCode: 429);
+            }
         }
-        var score = (await scoreRes.Content.ReadFromJsonAsync<ScoreResponse>())!;
-        intent = score.Intent;
-        span?.SetTag("app.intent", intent);
 
-        // 2) AI-chatten (RAG + LLM)
-        using var chatRes = await http.CreateClient("ai-chat").PostAsJsonAsync("/chat", new { question = req.Question, intent });
+        // 2) AI-chatten: LangGraph-agenten väljer själv verktyg (rag-api, algorithm)
+        using var chatRes = await http.CreateClient("ai-chat").PostAsJsonAsync("/chat",
+            new { question = req.Question, conversation_id = conversationId });
         if (!chatRes.IsSuccessStatusCode)
         {
             outcome = "ai_error";
-            log.LogError("ai_chat_failed status={Status} intent={Intent}", (int)chatRes.StatusCode, intent);
+            log.LogError("ai_chat_failed status={Status}", (int)chatRes.StatusCode);
             return Results.Problem("ai-chat failed", statusCode: 502);
         }
         var chat = (await chatRes.Content.ReadFromJsonAsync<ChatResponse>())!;
+        intent = chat.Intent;
+        span?.SetTag("app.intent", intent);
+        span?.SetTag("agent.steps", chat.Steps.GetArrayLength());
 
-        // 3) Spara konversationen – egen span runt ett affärssteg
+        // 3) Spara konversationen
         using (var persist = Telemetry.Source.StartActivity("persist conversation"))
         {
             await using var cmd = db.CreateCommand(
@@ -103,8 +116,8 @@ app.MapPost("/api/ask", async (AskRequest req, IHttpClientFactory http, NpgsqlDa
             await cmd.ExecuteNonQueryAsync();
         }
 
-        log.LogInformation("ask_completed intent={Intent} ms={Ms}", intent, sw.ElapsedMilliseconds);
-        return Results.Ok(new { answer = chat.Answer, intent, priority = score.Priority, sources = chat.Sources });
+        log.LogInformation("ask_completed intent={Intent} steps={Steps} ms={Ms}", intent, chat.Steps.GetArrayLength(), sw.ElapsedMilliseconds);
+        return Results.Ok(new { answer = chat.Answer, intent, conversationId, sources = chat.Sources, steps = chat.Steps, tools = chat.Tools, usage = chat.Usage });
     }
     catch (Exception ex)
     {
@@ -177,5 +190,4 @@ static class Db
 }
 
 record AskRequest(string Question, string? UserId, string? UserEmail);
-record ScoreResponse(string Intent, double Priority);
-record ChatResponse(string Answer, JsonElement Sources);
+record ChatResponse(string Answer, string Intent, JsonElement Sources, JsonElement Steps, JsonElement Tools, JsonElement Usage);

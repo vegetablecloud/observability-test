@@ -15,6 +15,11 @@ otlp:
     - service.namespace
     - service.version
     - deployment.environment.name
+    # postgresql-receivern lägger tabell/index som RESOURCE-attribut. Utan dem här kollapsar
+    # alla tabeller till en serie. Få, stabila värden = ok som labels.
+    - postgresql.database.name
+    - postgresql.table.name
+    - postgresql.index.name
   keep_identifying_resource_attributes: true
 
 storage:

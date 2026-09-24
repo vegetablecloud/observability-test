@@ -58,3 +58,22 @@ i `prometheus.yml` eller i Collectorns `prometheus`-receiver. Sätt `job_name` t
 
 I Grafana: **01 · Telemetriflödet → Push-tjänster** ska visa tjänsten med spans/s,
 metric-serier och loggrader/s.
+
+## 6. Extra för AI-tjänster (agenter, RAG, LLM)
+
+Samma kontrakt, plus några namn som gör att dashboards 03 och 04 fungerar för alla agenter:
+
+| Vad | Krav | Exempel i demot |
+|---|---|---|
+| En span per agentkörning | `invoke_agent <agent>` med `gen_ai.operation.name=invoke_agent`, `gen_ai.agent.name`, `gen_ai.conversation.id` | `services/ai-chat/agent_otel.py` → `run()` |
+| En span per nod | `node <namn>` med `langgraph.node`, `langgraph.step` | `@tel.node("agent")` |
+| En span per LLM-anrop | `chat <modell>` enligt GenAI-semconv: `gen_ai.request.model`, `gen_ai.usage.input_tokens/output_tokens`, `gen_ai.response.finish_reasons` | `tel.llm_call(...)` |
+| En span per verktyg | `execute_tool <verktyg>` med `gen_ai.tool.name`, `gen_ai.tool.call.id`, `error.type` vid fel | `tel.tool_call(...)` |
+| Metrics | `gen_ai.client.operation.duration`, `gen_ai.client.token.usage`, `langgraph.node.duration`, `langgraph.transitions`, `agent.tool.calls` | labels: modell, nod, verktyg, `outcome` – aldrig id:n |
+| Innehåll | prompter och svar på spans **bara** med `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true`, klippt | av i prod om det är känsligt |
+| Kvalitet (RAG) | `rag.retrieval.top_score`, `rag.search.empty`, `rag.documents.returned` | `services/rag-api/main.py` |
+
+Använder teamet LangChain/LangGraph och vill ha noll kod: `openinference-instrumentation-langchain`
+ger spans för kedjor, LLM-anrop och verktyg via en callback. Attributnamnen följer då OpenInference
+(`openinference.span.kind`, `input.value`, `llm.token_count.*`) i stället för GenAI-semconv, så
+dashboard-queries behöver anpassas.

@@ -1,0 +1,1017 @@
+{
+  "uid": "start",
+  "title": "00 · Start",
+  "description": "Plattformens framsida: status för varje komponent, nyckeltal och vägen vidare",
+  "tags": [
+    "telemetry-demo",
+    "start"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "version": 1,
+  "timepicker": {},
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
+      "type": "dashboards",
+      "tags": [
+        "telemetry-demo"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "\n<div style=\"font-family:Inter,system-ui,sans-serif;padding:6px 4px 0\">\n  <div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.12em;color:#FFB400\">AI-PLATTFORMEN · LIVE</div>\n  <div style=\"font-size:30px;font-weight:600;letter-spacing:-.02em;color:#fff;margin-top:4px\">Mår allt bra just nu?</div>\n  <div style=\"font-size:15px;color:#D6D6D6;margin-top:4px\">Status för varje komponent nedan. Gult betyder alltid <i>titta här</i>.\n  Klicka på en ruta eller välj din roll för att gå vidare.</div>\n</div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Applikationen · pushar telemetri",
+      "description": "Felkvot per tjänst ur traces: > 2 % = STÖRD, > 50 % = NERE. En tjänst som varit aktiv senaste timmen men tystnat i 2 minuter visas som NERE.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (komponent) (label_replace((((sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[2m])) or sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m])) * 0) / sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m]))) > bool 0.02) + (((sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\", status_code=\"STATUS_CODE_ERROR\"}[2m])) or sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m])) * 0) / sum by (service) (rate(traces_spanmetrics_calls_total{span_kind=\"SPAN_KIND_SERVER\"}[2m]))) > bool 0.50), \"komponent\", \"$1\", \"service\", \"(.*)\")) or max by (komponent) (label_replace(2 * group by (service_name) (max_over_time(target_info{service_name=~\"frontend|backend|ai-chat|rag-api|algorithm\"}[1h])), \"komponent\", \"$1\", \"service_name\", \"(.*)\"))",
+          "legendFormat": "{{komponent}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              },
+              {
+                "value": 1,
+                "color": "#7A5600"
+              },
+              {
+                "value": 2,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "#161616",
+                  "index": 0
+                },
+                "1": {
+                  "text": "STÖRD",
+                  "color": "#7A5600",
+                  "index": 1
+                },
+                "2": {
+                  "text": "NERE",
+                  "color": "#FFB400",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "noValue": "ingen data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 18
+        }
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 7,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "AI-modeller & databaser · hämtas (pull)",
+      "description": "vLLM: NERE om /metrics inte svarar, STÖRD om time-to-first-token p95 > 1 s eller kön > 4. Databaser: NERE om Collectorn slutat få statistik.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (komponent) (label_replace(clamp_max(2 * (1 - max by (job) (up{job=~\"vllm-.*\"})) + (((histogram_quantile(0.95, sum by (le, job) (rate({\"vllm:time_to_first_token_seconds_bucket\"}[2m]))) > bool 1) or on (job) max by (job) (sum by (job) ({\"vllm:num_requests_waiting\"}) > bool 4)) or on (job) (0 * max by (job) (up{job=~\"vllm-.*\"}))), 2), \"komponent\", \"$1\", \"job\", \"(.*)\")) or max by (komponent) (label_replace(0 * max by (service_name) (postgresql_backends), \"komponent\", \"$1\", \"service_name\", \"(.*)\")) or max by (komponent) (label_replace(2 * max by (service_name) (max_over_time(postgresql_backends[1h]) >= 0), \"komponent\", \"$1\", \"service_name\", \"(.*)\"))",
+          "legendFormat": "{{komponent}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              },
+              {
+                "value": 1,
+                "color": "#7A5600"
+              },
+              {
+                "value": 2,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "#161616",
+                  "index": 0
+                },
+                "1": {
+                  "text": "STÖRD",
+                  "color": "#7A5600",
+                  "index": 1
+                },
+                "2": {
+                  "text": "NERE",
+                  "color": "#FFB400",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "noValue": "ingen data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 18
+        }
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 7,
+        "y": 4,
+        "w": 7,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Plattform & infrastruktur",
+      "description": "Allt Prometheus skrapar själv. NERE = scrape misslyckas (up = 0).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max by (komponent) (label_replace(2 * (1 - max by (job) (up{job=~\"otel-collector|prometheus|loki|tempo|grafana|node-exporter|cadvisor|dcgm-exporter\"})), \"komponent\", \"$1\", \"job\", \"(.*)\"))",
+          "legendFormat": "{{komponent}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#161616"
+              },
+              {
+                "value": 1,
+                "color": "#7A5600"
+              },
+              {
+                "value": 2,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "#161616",
+                  "index": 0
+                },
+                "1": {
+                  "text": "STÖRD",
+                  "color": "#7A5600",
+                  "index": 1
+                },
+                "2": {
+                  "text": "NERE",
+                  "color": "#FFB400",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "noValue": "ingen data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 18
+        }
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 14,
+        "y": 4,
+        "w": 10,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Lyckade frågor",
+      "description": "Andel av användarnas frågor (frontend /ask) utan 5xx, senaste 5 min. Under 98 % blir den gul.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "1 - ((sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\", http_response_status_code=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\"}[5m])))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFB400"
+              },
+              {
+                "value": 0.98,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Väntetid p95",
+      "description": "95 % av användarna får svar snabbare än så här (frontend /ask). Gul över 3 s.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"frontend\", http_route=\"/ask\"}[5m])))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 3,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 4,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Frågor / min",
+      "description": "Hur många frågor användarna ställer just nu.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{service_name=\"frontend\", http_route=\"/ask\"}[1m])) * 60",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 8,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Agentkörningar OK",
+      "description": "Andel LangGraph-körningar som nådde respond utan fel (recursion limit, LLM nere, …). Detaljer: 03 · AI-agent.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(agent_runs_total{outcome=\"ok\"}[5m])) / sum(rate(agent_runs_total[5m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFB400"
+              },
+              {
+                "value": 0.97,
+                "color": "#FFFFFF"
+              }
+            ]
+          },
+          "links": [
+            {
+              "title": "03 · AI-agent",
+              "url": "/d/ai-agent"
+            }
+          ],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Verktygsfel",
+      "description": "Andel tool calls som misslyckades. Agenten får felet tillbaka och kan ofta svara ändå, men över 5 % är något trasigt.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "(sum(rate(agent_tool_calls_total{outcome=\"error\"}[5m])) or vector(0)) / sum(rate(agent_tool_calls_total[5m]))",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 0.05,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [
+            {
+              "title": "03 · AI-agent",
+              "url": "/d/ai-agent"
+            }
+          ],
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 16,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "GPU",
+      "description": "GPU-utnyttjande på DGX Spark. Över 90 %: förvänta längre svarstider från modellerna.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "avg(DCGM_FI_DEV_GPU_UTIL)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "#FFFFFF"
+              },
+              {
+                "value": 90,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "links": [
+            {
+              "title": "07 · DGX Spark",
+              "url": "/d/infra-dgx"
+            }
+          ],
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 20,
+        "y": 9,
+        "w": 4,
+        "h": 4
+      }
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Arkitekturen · klicka på en ruta",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<svg viewBox=\"0 0 1600 460\" width=\"100%\" style=\"max-height:460px\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Roboto Mono, ui-monospace, monospace\">\n<style>\n  .bx rect { fill:#0D0D0D; stroke:#4D4D4D; stroke-width:1.5; transition:stroke .15s; }\n  .bx.acc rect { stroke:#FFB400; stroke-width:2; }\n  .bx.ext rect { stroke-dasharray:5 4; }\n  a:hover .bx rect { stroke:#FFB400; fill:#141414; }\n  .t { fill:#FFFFFF; font-size:15px; } .s { fill:#707070; font-size:12px; }\n  .col { fill:#707070; font-size:12px; letter-spacing:1.5px; }\n  .lbl { fill:#707070; font-size:11px; } .lbl.hot { fill:#FFB400; }\n  path.req { stroke:#FFB400; stroke-width:2.2; fill:none; stroke-dasharray:7 6; animation:flow 1.2s linear infinite; }\n  path.pull { stroke:#707070; stroke-width:1.5; fill:none; stroke-dasharray:3 5; }\n  path.tel { stroke:#4D4D4D; stroke-width:1.2; fill:none; }\n  @keyframes flow { to { stroke-dashoffset:-26; } }\n</style>\n<defs><marker id=\"ah\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#FFB400\"/></marker><marker id=\"ag\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#707070\"/></marker></defs>\n<text class=\"col\" x=\"20\" y=\"20\">① ANVÄNDARE</text>\n<text class=\"col\" x=\"200\" y=\"20\">② APPLIKATION · pushar OTLP</text>\n<text class=\"col\" x=\"850\" y=\"20\">③ MODELLER & DATA · pull</text>\n<text class=\"col\" x=\"1100\" y=\"20\">④ TELEMETRI</text>\n<text class=\"col\" x=\"1470\" y=\"20\">⑤ SE</text>\n<path class=\"req\" d=\"M170 178 L200 178\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M380 178 L410 178\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M590 178 L620 178\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M500 150 L500 96\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M800 178 L850 178\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"831\" y=\"172\">LLM</text>\n<path class=\"req\" d=\"M710 206 L710 270\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"716\" y=\"232\">verktyg</text>\n<path class=\"req\" d=\"M710 150 L710 96\" marker-end=\"url(#ah)\"/>\n<text class=\"lbl hot\" x=\"716\" y=\"117\">verktyg</text>\n<path class=\"req\" d=\"M800 298 L850 298\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M710 326 L940 370\" marker-end=\"url(#ah)\"/>\n<path class=\"req\" d=\"M620 68 L590 68\" marker-end=\"url(#ah)\"/>\n<path class=\"pull\" d=\"M1030 178 L1100 190\" marker-end=\"url(#ag)\"/>\n<text class=\"lbl \" x=\"1071\" y=\"178\">/metrics</text>\n<path class=\"pull\" d=\"M940 370 L1100 190\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1290 190 L1385 110\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1290 190 L1330 190\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1290 190 L1385 270\" marker-end=\"url(#ag)\"/>\n<path class=\"pull\" d=\"M1270 330 L1385 320\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1385 110 L1525 150\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1440 190 L1470 190\" marker-end=\"url(#ag)\"/>\n<path class=\"tel\" d=\"M1385 270 L1525 230\" marker-end=\"url(#ag)\"/>\n<g class=\"bx\"><rect x=\"20\" y=\"150\" width=\"150\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"32\" y=\"174\">användare</text><text class=\"s\" x=\"32\" y=\"193\">UI · loadgen · e2e</text></g>\n<a href=\"/d/platform-overview\"><g class=\"bx\"><rect x=\"200\" y=\"150\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"212\" y=\"174\">frontend</text><text class=\"s\" x=\"212\" y=\"193\">C# · UI / BFF</text></g></a>\n<a href=\"/d/platform-overview\"><g class=\"bx\"><rect x=\"410\" y=\"150\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"422\" y=\"174\">backend</text><text class=\"s\" x=\"422\" y=\"193\">C# · affärslogik</text></g></a>\n<a href=\"/d/databases\"><g class=\"bx ext\"><rect x=\"410\" y=\"40\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"422\" y=\"64\">postgres</text><text class=\"s\" x=\"422\" y=\"83\">app-databas</text></g></a>\n<a href=\"/d/ai-agent\"><g class=\"bx acc\"><rect x=\"620\" y=\"150\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"632\" y=\"174\">ai-chat</text><text class=\"s\" x=\"632\" y=\"193\">LangGraph-agent</text></g></a>\n<a href=\"/d/ai-agent\"><g class=\"bx\"><rect x=\"620\" y=\"40\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"632\" y=\"64\">algorithm</text><text class=\"s\" x=\"632\" y=\"83\">förberäknade svar</text></g></a>\n<a href=\"/d/llm-rag\"><g class=\"bx\"><rect x=\"620\" y=\"270\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"632\" y=\"294\">rag-api</text><text class=\"s\" x=\"632\" y=\"313\">hybrid-sökning</text></g></a>\n<a href=\"/d/llm-rag\"><g class=\"bx ext\"><rect x=\"850\" y=\"150\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"862\" y=\"174\">vllm · gemma</text><text class=\"s\" x=\"862\" y=\"193\">chat + tool calling</text></g></a>\n<a href=\"/d/llm-rag\"><g class=\"bx ext\"><rect x=\"850\" y=\"270\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"862\" y=\"294\">vllm · harrier</text><text class=\"s\" x=\"862\" y=\"313\">embeddings</text></g></a>\n<a href=\"/d/databases\"><g class=\"bx ext\"><rect x=\"850\" y=\"370\" width=\"180\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"862\" y=\"394\">paradedb</text><text class=\"s\" x=\"862\" y=\"413\">BM25 + pgvector</text></g></a>\n<a href=\"/d/telemetry-flow\"><g class=\"bx\"><rect x=\"1100\" y=\"90\" width=\"190\" height=\"200\" rx=\"2\"/><text class=\"t\" x=\"1112\" y=\"114\">OTel Collector</text><text class=\"s\" x=\"1112\" y=\"133\">receive·process·export</text></g></a>\n<a href=\"/d/telemetry-flow\"><g class=\"bx\"><rect x=\"1330\" y=\"60\" width=\"110\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1342\" y=\"84\">loki</text><text class=\"s\" x=\"1342\" y=\"103\">logs</text></g></a>\n<a href=\"/d/telemetry-flow\"><g class=\"bx\"><rect x=\"1330\" y=\"165\" width=\"110\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1342\" y=\"189\">tempo</text><text class=\"s\" x=\"1342\" y=\"208\">traces</text></g></a>\n<a href=\"/d/telemetry-flow\"><g class=\"bx\"><rect x=\"1330\" y=\"270\" width=\"110\" height=\"50\" rx=\"2\"/><text class=\"t\" x=\"1342\" y=\"294\">prometheus</text><text class=\"s\" x=\"1342\" y=\"313\">metrics</text></g></a>\n<g class=\"bx acc\"><rect x=\"1470\" y=\"150\" width=\"110\" height=\"80\" rx=\"2\"/><text class=\"t\" x=\"1482\" y=\"174\">grafana</text><text class=\"s\" x=\"1482\" y=\"193\">du är här</text></g>\n<a href=\"/d/infra-dgx\"><g class=\"bx ext\"><rect x=\"1100\" y=\"330\" width=\"340\" height=\"56\" rx=\"2\"/><text class=\"t\" x=\"1112\" y=\"354\">DGX Spark</text><text class=\"s\" x=\"1112\" y=\"373\">CPU · GPU · minne · containrar</text></g></a>\n<path class=\"req\" d=\"M20 448 L60 448\"/><text class=\"lbl\" x=\"68\" y=\"452\">en fråga genom stacken</text><path class=\"pull\" d=\"M260 448 L300 448\"/><text class=\"lbl\" x=\"308\" y=\"452\">pull · du äger inte koden</text><path class=\"tel\" d=\"M520 448 L560 448\"/><text class=\"lbl\" x=\"568\" y=\"452\">telemetri</text><text class=\"lbl\" x=\"720\" y=\"452\" style=\"fill:#D6D6D6\">klicka på en ruta för dess dashboard</text>\n</svg>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 14
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "Vem är du?",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"border:1px solid #262626;background:#0D0D0D;padding:14px 16px;height:100%;box-sizing:border-box\"><div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em;color:#707070\">TESTARE</div><div style=\"font-size:17px;font-weight:600;color:#fff;margin:4px 0 10px\">Följ ett anrop från A till Ö</div><a href=\"/d/test-flow\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">05 · Testflöde A→Ö <span style=\"color:#FFB400\">→</span></a><a href=\"/d/platform-overview\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">02 · Plattform · Översikt <span style=\"color:#FFB400\">→</span></a></div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 14,
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 6,
+        "h": 6
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"border:1px solid #262626;background:#0D0D0D;padding:14px 16px;height:100%;box-sizing:border-box\"><div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em;color:#707070\">AI-UTVECKLARE</div><div style=\"font-size:17px;font-weight:600;color:#fff;margin:4px 0 10px\">Se agenten tänka, steg för steg</div><a href=\"/d/ai-agent\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">03 · AI-agent · LangGraph <span style=\"color:#FFB400\">→</span></a><a href=\"/d/llm-rag\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">04 · LLM & RAG <span style=\"color:#FFB400\">→</span></a></div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 15,
+      "gridPos": {
+        "x": 6,
+        "y": 29,
+        "w": 6,
+        "h": 6
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"border:1px solid #262626;background:#0D0D0D;padding:14px 16px;height:100%;box-sizing:border-box\"><div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em;color:#707070\">DRIFT</div><div style=\"font-size:17px;font-weight:600;color:#fff;margin:4px 0 10px\">Håll maskinen frisk</div><a href=\"/d/containers\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">06 · Containrar <span style=\"color:#FFB400\">→</span></a><a href=\"/d/infra-dgx\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">07 · DGX Spark <span style=\"color:#FFB400\">→</span></a><a href=\"/d/databases\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">08 · Databaser <span style=\"color:#FFB400\">→</span></a></div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 16,
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 6,
+        "h": 6
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "description": "",
+      "targets": [],
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"border:1px solid #262626;background:#0D0D0D;padding:14px 16px;height:100%;box-sizing:border-box\"><div style=\"font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.1em;color:#707070\">PLATTFORM</div><div style=\"font-size:17px;font-weight:600;color:#fff;margin:4px 0 10px\">Förstå telemetrin</div><a href=\"/d/telemetry-flow\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">01 · Telemetriflödet <span style=\"color:#FFB400\">→</span></a><a href=\"/d/cardinality-cost\" style=\"display:block;color:#fff;text-decoration:none;padding:7px 0;border-top:1px solid #262626;font-family:'Roboto Mono',monospace;font-size:13px\">09 · Cardinality & kostnad <span style=\"color:#FFB400\">→</span></a></div>",
+        "code": {
+          "language": "plaintext"
+        }
+      },
+      "transparent": true,
+      "id": 17,
+      "gridPos": {
+        "x": 18,
+        "y": 29,
+        "w": 6,
+        "h": 6
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "Senaste felen · alla tjänster",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "title": "ERROR · senaste först",
+      "description": "Varje felrad från alla tjänster. Expandera en rad och klicka 'Öppna trace' för att se hela anropet.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "refId": "A",
+          "expr": "{deployment_environment_name=\"demo\"} | detected_level=\"error\"",
+          "legendFormat": "",
+          "editorMode": "code",
+          "queryType": "range",
+          "direction": "backward"
+        }
+      ],
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": true
+      },
+      "id": 19,
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 9
+      }
+    }
+  ]
+}

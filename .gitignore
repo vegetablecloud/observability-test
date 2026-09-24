@@ -2,3 +2,8 @@
 .env
 .env.*
 !.env.example
+
+# Byggprodukter (.NET, Python)
+bin/
+obj/
+__pycache__/

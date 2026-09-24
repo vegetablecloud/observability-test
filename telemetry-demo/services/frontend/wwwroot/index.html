@@ -25,6 +25,11 @@
   .bot.err { border-color:var(--y); }
   .meta { font-family:var(--mono); font-size:12px; color:var(--g500); margin-top:8px; display:flex; flex-wrap:wrap; gap:12px; }
   .meta .slow { color:var(--y); }
+  .steps { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; font-family:var(--mono); font-size:12px; }
+  .steps span { border:1px solid var(--g700); padding:2px 8px; color:var(--g300); }
+  .steps span.tool { border-style:dashed; }
+  .steps span.bad { border-color:var(--y); color:var(--y); }
+  .steps i { color:var(--g500); font-style:normal; align-self:center; }
   form { display:flex; gap:10px; margin-top:14px; }
   input { flex:1; background:#050505; border:1px solid var(--g700); color:var(--wh); font:16px var(--sans); padding:12px; }
   input:focus { outline:none; border-color:var(--y); }
@@ -40,13 +45,13 @@
 <body>
 <div class="wrap">
   <main>
-    <div class="eyebrow">frontend (c#) → backend (c#) → algorithm (py) → ai-chat (py) → qdrant · llm</div>
-    <h1>Fråga om observability</h1>
-    <div class="label" style="margin-bottom:16px">Varje fråga blir en trace genom 6 tjänster · klicka på trace_id för att öppna den i Grafana</div>
+    <div class="eyebrow">frontend (c#) → backend (c#) → ai-chat (langgraph) → rag-api · algorithm → vLLM gemma · harrier · paradedb</div>
+    <h1>Fråga agenten</h1>
+    <div class="label" style="margin-bottom:16px">Varje fråga blir en trace genom hela stacken · agentens steg visas under svaret · klicka för att följa den A→Ö i Grafana</div>
     <div class="panel">
       <div id="log"></div>
       <form id="f">
-        <input id="q" autocomplete="off" placeholder="T.ex. Hur kopplar jag loggar till en trace?" value="Hur kopplar jag loggar i Loki till en trace_id?">
+        <input id="q" autocomplete="off" placeholder="T.ex. Hur ser prognosen ut för projekt P-102?" value="Hur ser prognosen och risken ut för projekt P-102?">
         <button>Skicka</button>
       </form>
     </div>
@@ -54,20 +59,24 @@
   <aside>
     <div class="panel">
       <div class="label">Simulera incident</div>
-      <p>Gör LLM:en långsam (GPU mot 100 %) eller felande. Följ sedan kedjan metrics → traces → logs i Grafana.</p>
+      <p>Ett fel i taget. Följ sedan kedjan metrics → traces → logs i Grafana, eller se var i agenten det går sönder.</p>
       <div class="stack">
         <button class="ghost" data-mode="normal">● normal</button>
-        <button class="ghost" data-mode="slow">● slow · LLM-timeouts</button>
-        <button class="ghost" data-mode="error">● error · 30 % 500:or</button>
+        <button class="ghost" data-mode="slow">● slow · GPU mättad, LLM-timeouts</button>
+        <button class="ghost" data-mode="error">● error · 30 % 500 från gemma</button>
+        <button class="ghost" data-mode="loop">● loop · agenten når recursion_limit</button>
+        <button class="ghost" data-mode="bad_args">● bad_args · trasiga tool-argument</button>
+        <button class="ghost" data-mode="rag_error">● rag_error · sökindex nere</button>
+        <button class="ghost" data-mode="db_slow">● db_slow · ParadeDB långsam</button>
+        <button class="ghost" data-mode="stale">● stale · förberäkningen stannar</button>
       </div>
     </div>
     <div class="panel links">
       <div class="label">Grafana</div>
-      <a id="d-flow" href="#">01 · Telemetriflödet</a>
+      <a id="d-start" href="#">00 · Start</a>
+      <a id="d-agent" href="#">03 · AI-agent · LangGraph</a>
+      <a id="d-test" href="#">05 · Testflöde A→Ö</a>
       <a id="d-overview" href="#">02 · Plattform · Översikt</a>
-      <a id="d-ai" href="#">03 · AI · RAG & LLM</a>
-      <a id="d-infra" href="#">04 · Infrastruktur</a>
-      <a id="d-card" href="#">05 · Cardinality & kostnad</a>
     </div>
   </aside>
 </div>
@@ -84,7 +93,7 @@ function add(html, cls) { const d = document.createElement('div'); d.className =
 
 fetch('/config').then(r => r.json()).then(c => {
   grafana = c.grafanaUrl;
-  const ids = { 'd-flow': 'telemetry-flow', 'd-overview': 'platform-overview', 'd-ai': 'ai-rag-llm', 'd-infra': 'infra-dgx', 'd-card': 'cardinality-cost' };
+  const ids = { 'd-start': 'start', 'd-agent': 'ai-agent', 'd-test': 'test-flow', 'd-overview': 'platform-overview' };
   Object.entries(ids).forEach(([el, uid]) => { $('#' + el).href = `${grafana}/d/${uid}`; $('#' + el).target = '_blank'; });
 });
 
@@ -101,9 +110,12 @@ $('#f').addEventListener('submit', async e => {
     const j = await r.json().catch(() => ({}));
     const meta = `<div class="meta"><span class="${ms > 2000 ? 'slow' : ''}">${ms} ms</span>` +
       (j.intent ? `<span>intent=${esc(j.intent)}</span>` : '') +
-      (tid ? `<a href="${traceLink(tid)}" target="_blank">trace_id=${tid}</a>` : '') + '</div>';
+      (tid ? `<a href="${traceLink(tid)}" target="_blank">trace ↗</a><a href="${grafana}/d/test-flow?var-trace_id=${tid}" target="_blank">A→Ö ↗</a>` : '') + '</div>';
+    const steps = (j.steps || []).map(s => s === 'tools'
+        ? (j.tools || []).splice(0, 2).map(t => `<span class="tool ${t.ok ? '' : 'bad'}">${esc(t.tool)}${t.ok ? '' : ' ✕'}</span>`).join('') || '<span class="tool">tools</span>'
+        : `<span>${esc(s)}</span>`).join('<i>→</i>');
     if (!r.ok) { pending.classList.add('err'); pending.innerHTML = `Något gick fel (${r.status}): ${esc(j.detail || j.title || '')}${meta}`; return; }
-    pending.innerHTML = esc(j.answer) + meta;
+    pending.innerHTML = esc(j.answer) + (steps ? `<div class="steps">${steps}</div>` : '') + meta;
   } catch (err) { pending.classList.add('err'); pending.textContent = 'Nätverksfel: ' + err; }
 });
 

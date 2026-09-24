@@ -1,9 +1,10 @@
 {
   "uid": "infra-dgx",
-  "title": "04 · Infrastruktur · DGX Spark & containers",
-  "description": "Hårdvara, GPU och containers – samma tidsaxel som applikationen",
+  "title": "07 · DGX Spark",
+  "description": "Har maskinen resurser kvar, och är GPU:n frisk?",
   "tags": [
-    "telemetry-demo"
+    "telemetry-demo",
+    "drift"
   ],
   "editable": true,
   "graphTooltip": 1,
@@ -22,16 +23,44 @@
     "list": []
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "Chaos",
+        "enable": true,
+        "iconColor": "#FFB400",
+        "hide": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "expr": "{service_name=\"frontend\"} |= \"chaos_mode_set\" | regexp \"mode=(?P<mode>[a-z_]+)\"",
+        "titleFormat": "chaos: {{mode}}",
+        "textFormat": "{{mode}}",
+        "tagKeys": "mode",
+        "instant": false
+      }
+    ]
   },
   "links": [
     {
-      "title": "Telemetry-demo",
+      "title": "00 · Start",
+      "type": "link",
+      "url": "/d/start",
+      "icon": "apps",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "Startsidan",
+      "asDropdown": false,
+      "tags": []
+    },
+    {
+      "title": "Dashboards",
       "type": "dashboards",
       "tags": [
         "telemetry-demo"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true,
       "targetBlank": false,
@@ -40,20 +69,9 @@
   ],
   "panels": [
     {
-      "id": 55,
       "type": "stat",
       "title": "CPU",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Hela maskinens CPU (alla kärnor). Gul över 85 %.",
       "targets": [
         {
           "datasource": {
@@ -65,9 +83,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -87,6 +110,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -106,23 +130,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 56,
-      "type": "stat",
-      "title": "Minne (värd)",
-      "description": "",
+      },
+      "id": 1,
       "gridPos": {
-        "x": 4,
+        "x": 0,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Minne",
+      "description": "Använt minne. På DGX Spark är det samma 128 GB som GPU:n använder (unified memory).",
       "targets": [
         {
           "datasource": {
@@ -134,9 +154,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -156,6 +181,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -175,23 +201,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 57,
-      "type": "stat",
-      "title": "Disk /",
-      "description": "",
+      },
+      "id": 2,
       "gridPos": {
-        "x": 8,
+        "x": 4,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Disk /",
+      "description": "Rotfilsystemet. Modellvikter, Loki och Tempo fyller disken över tid.",
       "targets": [
         {
           "datasource": {
@@ -203,9 +225,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -225,6 +252,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -244,23 +272,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 58,
-      "type": "stat",
-      "title": "GPU",
-      "description": "",
+      },
+      "id": 3,
       "gridPos": {
-        "x": 12,
+        "x": 8,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "GPU",
+      "description": "GPU-utnyttjande. Konstant över 90 %: modellerna köar.",
       "targets": [
         {
           "datasource": {
@@ -272,9 +296,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -294,6 +323,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -313,23 +343,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 59,
-      "type": "stat",
-      "title": "GPU-temp",
-      "description": "",
+      },
+      "id": 4,
       "gridPos": {
-        "x": 16,
+        "x": 12,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "GPU-temp",
+      "description": "Över 80 °C börjar GPU:n strypa klockan (se ②).",
       "targets": [
         {
           "datasource": {
@@ -341,9 +367,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "celsius",
@@ -363,6 +394,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -382,23 +414,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
-      }
-    },
-    {
-      "id": 60,
-      "type": "stat",
-      "title": "GPU-effekt",
-      "description": "",
+      },
+      "id": 5,
       "gridPos": {
-        "x": 20,
+        "x": 16,
         "y": 0,
         "w": 4,
         "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "title": "GPU-effekt",
+      "description": "Strömförbrukning. Följer utnyttjandet.",
       "targets": [
         {
           "datasource": {
@@ -410,9 +438,14 @@
           "legendFormat": "__auto",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
@@ -428,6 +461,7 @@
               }
             ]
           },
+          "links": [],
           "decimals": 0
         },
         "overrides": []
@@ -447,12 +481,19 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
       }
     },
     {
-      "id": 61,
+      "id": 7,
       "type": "row",
-      "title": "Värdmaskinen · node-exporter (pull)",
+      "title": "② GPU · dcgm-exporter",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -463,20 +504,438 @@
       "panels": []
     },
     {
-      "id": 62,
       "type": "timeseries",
-      "title": "CPU per läge",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 5,
-        "w": 8,
-        "h": 8
-      },
+      "title": "GPU-utnyttjande",
+      "description": "Streckad linje = 90 %. Kurvan ska följa trafiken, inte ligga i taket.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "avg by (gpu) (DCGM_FI_DEV_GPU_UTIL)",
+          "legendFormat": "gpu {{gpu}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB400"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 90,
+                "color": "#FFB400"
+              }
+            ]
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU-minne (unified)",
+      "description": "vLLM reserverar en fast andel (gpu-memory-utilization) vid start, så 'använt' är mest platt.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(DCGM_FI_DEV_FB_USED) * 1024 * 1024",
+          "legendFormat": "använt",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "(sum(DCGM_FI_DEV_FB_USED) + sum(DCGM_FI_DEV_FB_FREE)) * 1024 * 1024",
+          "legendFormat": "totalt",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "använt"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "totalt"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Temperatur & effekt",
+      "description": "Temperatur (vänster axel) och effekt (höger axel).",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "max(DCGM_FI_DEV_GPU_TEMP)",
+          "legendFormat": "°C",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "sum(DCGM_FI_DEV_POWER_USAGE)",
+          "legendFormat": "W",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "°C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "W"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "SM-klocka",
+      "description": "Klockfrekvensen sjunker när GPU:n är varm eller slår i effektgränsen (strypning). Då blir allt långsammare.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "avg(DCGM_FI_DEV_SM_CLOCK)",
+          "legendFormat": "MHz",
+          "range": true,
+          "instant": false,
+          "exemplar": false,
+          "editorMode": "code"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "pointSize": 6,
+            "spanNulls": true,
+            "axisBorderShow": false,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#D6D6D6"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 18,
+        "y": 5,
+        "w": 6,
+        "h": 8
+      }
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "③ Värden · node-exporter",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU per läge",
+      "description": "iowait (gul) = CPU:n väntar på disk. Hög iowait + långsamma frågor = disken är flaskhalsen.",
       "targets": [
         {
           "datasource": {
@@ -488,31 +947,39 @@
           "legendFormat": "{{mode}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 40,
             "gradientMode": "opacity",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "normal",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -567,29 +1034,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 13,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 6,
+        "h": 8
       }
     },
     {
-      "id": 63,
       "type": "timeseries",
       "title": "Minne",
-      "description": "",
-      "gridPos": {
-        "x": 8,
-        "y": 5,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "Använt mot totalt.",
       "targets": [
         {
           "datasource": {
@@ -601,7 +1065,8 @@
           "legendFormat": "använt",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -613,31 +1078,39 @@
           "legendFormat": "totalt",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -687,29 +1160,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 14,
+      "gridPos": {
+        "x": 6,
+        "y": 14,
+        "w": 6,
+        "h": 8
       }
     },
     {
-      "id": 64,
       "type": "timeseries",
       "title": "Nätverk",
-      "description": "",
-      "gridPos": {
-        "x": 16,
-        "y": 5,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "description": "In uppåt, ut nedåt.",
       "targets": [
         {
           "datasource": {
@@ -718,10 +1188,11 @@
           },
           "refId": "A",
           "expr": "sum(rate(node_network_receive_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[1m]))",
-          "legendFormat": "rx",
+          "legendFormat": "in",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -730,41 +1201,49 @@
           },
           "refId": "B",
           "expr": "-sum(rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[1m]))",
-          "legendFormat": "tx",
+          "legendFormat": "ut",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "rx"
+              "options": "in"
             },
             "properties": [
               {
@@ -779,7 +1258,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "tx"
+              "options": "ut"
             },
             "properties": [
               {
@@ -797,42 +1276,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 15,
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 6,
+        "h": 8
       }
     },
     {
-      "id": 65,
-      "type": "row",
-      "title": "GPU · dcgm-exporter (pull)",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 13,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 66,
       "type": "timeseries",
-      "title": "GPU-utnyttjande",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 14,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": "Disk-I/O",
+      "description": "Läs uppåt, skriv nedåt.",
       "targets": [
         {
           "datasource": {
@@ -840,93 +1303,12 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "avg by (gpu) (DCGM_FI_DEV_GPU_UTIL)",
-          "legendFormat": "gpu {{gpu}}",
+          "expr": "sum(rate(node_disk_read_bytes_total[1m]))",
+          "legendFormat": "läs",
           "range": true,
           "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "#FFB400"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisBorderShow": false,
-            "axisSoftMin": 0,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 90,
-                "color": "#FFB400"
-              }
-            ]
-          },
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 67,
-      "type": "timeseries",
-      "title": "GPU-minne",
-      "description": "",
-      "gridPos": {
-        "x": 8,
-        "y": 14,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum(DCGM_FI_DEV_FB_USED) * 1024 * 1024",
-          "legendFormat": "använt",
-          "range": true,
-          "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         },
         {
           "datasource": {
@@ -934,42 +1316,50 @@
             "uid": "prometheus"
           },
           "refId": "B",
-          "expr": "(sum(DCGM_FI_DEV_FB_USED) + sum(DCGM_FI_DEV_FB_FREE)) * 1024 * 1024",
-          "legendFormat": "totalt",
+          "expr": "-sum(rate(node_disk_written_bytes_total[1m]))",
+          "legendFormat": "skriv",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "color": {
-            "mode": "palette-classic"
-          },
+          "unit": "Bps",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "använt"
+              "options": "läs"
             },
             "properties": [
               {
@@ -984,127 +1374,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "totalt"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    6,
-                    4
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 68,
-      "type": "timeseries",
-      "title": "Temperatur & effekt",
-      "description": "",
-      "gridPos": {
-        "x": 16,
-        "y": 14,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "max(DCGM_FI_DEV_GPU_TEMP)",
-          "legendFormat": "°C",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "B",
-          "expr": "sum(DCGM_FI_DEV_POWER_USAGE)",
-          "legendFormat": "W",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisBorderShow": false,
-            "axisSoftMin": 0,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "°C"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFFFFF"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "W"
+              "options": "skriv"
             },
             "properties": [
               {
@@ -1113,16 +1383,6 @@
                   "mode": "fixed",
                   "fixedColor": "#707070"
                 }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    6,
-                    4
-                  ]
-                }
               }
             ]
           }
@@ -1132,18 +1392,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 16,
+      "gridPos": {
+        "x": 18,
+        "y": 14,
+        "w": 6,
+        "h": 8
       }
     },
     {
-      "id": 69,
+      "id": 17,
       "type": "row",
-      "title": "Containers · cAdvisor (pull)",
+      "title": "④ Runtimes · ur OTel-SDK:t (push)",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -1154,469 +1422,9 @@
       "panels": []
     },
     {
-      "id": 70,
       "type": "timeseries",
-      "title": "CPU per container",
-      "description": "1.0 = en hel CPU-kärna. Ingen data? cAdvisor behöver cgroup v2 och Docker-socket (se docs/).",
-      "gridPos": {
-        "x": 0,
-        "y": 23,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service!=\"\"}[1m]))",
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisBorderShow": false,
-            "axisSoftMin": 0,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "frontend"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFFFFF"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "backend"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFB400"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ai-chat"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "algorithm"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#707070"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "llm-server"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#EDEDED"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "llm"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#EDEDED"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "postgres"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "user"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#707070"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "partner-service"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 71,
-      "type": "timeseries",
-      "title": "Minne per container",
-      "description": "",
-      "gridPos": {
-        "x": 12,
-        "y": 23,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "A",
-          "expr": "sum by (container_label_com_docker_compose_service) (container_memory_working_set_bytes{container_label_com_docker_compose_service!=\"\"})",
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisBorderShow": false,
-            "axisSoftMin": 0,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "frontend"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFFFFF"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "backend"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#FFB400"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ai-chat"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "algorithm"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#707070"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "llm-server"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#EDEDED"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "llm"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#EDEDED"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "postgres"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "user"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#707070"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "partner-service"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 72,
-      "type": "row",
-      "title": "Runtime per tjänst · OTel SDK (push)",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 32,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 73,
-      "type": "timeseries",
-      "title": ".NET: working set",
-      "description": "",
-      "gridPos": {
-        "x": 0,
-        "y": 33,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": ".NET · working set",
+      "description": "Minnet .NET-processen använder, per tjänst.",
       "targets": [
         {
           "datasource": {
@@ -1628,31 +1436,39 @@
           "legendFormat": "{{service_name}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -1681,12 +1497,8 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#FFB400"
+                  "fixedColor": "#D6D6D6"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
               }
             ]
           },
@@ -1700,7 +1512,26 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
                 }
               }
             ]
@@ -1733,14 +1564,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm-server"
+              "options": "vllm-gemma"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#FFFFFF"
                 }
               }
             ]
@@ -1748,29 +1579,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm"
+              "options": "vllm-embed"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#707070"
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
               }
             ]
@@ -1786,6 +1612,21 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
                 }
               }
             ]
@@ -1826,29 +1667,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 18,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 74,
       "type": "timeseries",
-      "title": ".NET: GC-paus",
-      "description": "",
-      "gridPos": {
-        "x": 8,
-        "y": 33,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": ".NET · GC-paus",
+      "description": "Andel av tiden processen står still för garbage collection. Över några procent syns det i latensen.",
       "targets": [
         {
           "datasource": {
@@ -1860,31 +1698,39 @@
           "legendFormat": "{{service_name}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
@@ -1913,12 +1759,8 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#FFB400"
+                  "fixedColor": "#D6D6D6"
                 }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 3
               }
             ]
           },
@@ -1932,7 +1774,26 @@
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#D6D6D6"
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
                 }
               }
             ]
@@ -1965,14 +1826,14 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm-server"
+              "options": "vllm-gemma"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#FFFFFF"
                 }
               }
             ]
@@ -1980,29 +1841,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "llm"
+              "options": "vllm-embed"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
-                  "fixedColor": "#EDEDED"
+                  "fixedColor": "#707070"
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "qdrant"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#4D4D4D"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
               }
             ]
@@ -2018,6 +1874,21 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
                 }
               }
             ]
@@ -2058,29 +1929,26 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 19,
+      "gridPos": {
+        "x": 8,
+        "y": 23,
+        "w": 8,
+        "h": 8
       }
     },
     {
-      "id": 75,
       "type": "timeseries",
-      "title": "Postgres (Collectorn hämtar)",
-      "description": "",
-      "gridPos": {
-        "x": 16,
-        "y": 33,
-        "w": 8,
-        "h": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "title": ".NET · trådpoolskö",
+      "description": "Arbete som väntar på en tråd. Växer den: synkrona anrop blockerar trådpoolen.",
       "targets": [
         {
           "datasource": {
@@ -2088,54 +1956,50 @@
             "uid": "prometheus"
           },
           "refId": "A",
-          "expr": "sum(rate(postgresql_commits_total[1m]))",
-          "legendFormat": "commits/s",
+          "expr": "sum by (service_name) (dotnet_thread_pool_queue_length_total)",
+          "legendFormat": "{{service_name}}",
           "range": true,
           "instant": false,
-          "exemplar": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "refId": "B",
-          "expr": "sum(postgresql_backends)",
-          "legendFormat": "anslutningar",
-          "range": true,
-          "instant": false,
-          "exemplar": false
+          "exemplar": false,
+          "editorMode": "code"
         }
       ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 0,
             "gradientMode": "none",
             "showPoints": "never",
+            "pointSize": 6,
             "spanNulls": true,
             "axisBorderShow": false,
             "axisSoftMin": 0,
+            "barAlignment": 0,
             "stacking": {
               "mode": "none",
               "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "lineInterpolation": "smooth"
+          },
+          "color": {
+            "mode": "palette-classic"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "commits/s"
+              "options": "frontend"
             },
             "properties": [
               {
@@ -2150,7 +2014,56 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "anslutningar"
+              "options": "backend"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-chat"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFB400"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rag-api"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EDEDED"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "algorithm"
             },
             "properties": [
               {
@@ -2171,6 +2084,106 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vllm-gemma"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vllm-embed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "postgres"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "paradedb"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D6D6D6"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "user"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#707070"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "partner-service"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4D4D4D"
+                }
+              }
+            ]
           }
         ]
       },
@@ -2178,12 +2191,20 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "id": 20,
+      "gridPos": {
+        "x": 16,
+        "y": 23,
+        "w": 8,
+        "h": 8
       }
     }
   ]
